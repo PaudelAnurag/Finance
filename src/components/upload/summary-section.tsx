@@ -44,7 +44,7 @@ export function SummarySection({ a }: { a: CsvAnalysis }) {
       <section aria-label="Financial summary" className="space-y-3">
         <h2 className="text-[15px] font-semibold">Financial Summary</h2>
         {a.invalidRows > 0 && (
-          <p role="status" className="rounded-lg border border-risk-medium/40 bg-[var(--badge-orange-bg)] px-3 py-2 text-[13px]">
+          <p role="status" className="rounded-lg border border-risk-medium/40 bg-(--badge-orange-bg) px-3 py-2 text-[13px]">
             Calculated from {a.validRows} valid row{a.validRows === 1 ? "" : "s"}. {a.invalidRows} invalid row
             {a.invalidRows === 1 ? " was" : "s were"} excluded — fix them and re-upload for complete figures.
           </p>

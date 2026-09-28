@@ -92,7 +92,7 @@ export default function Home() {
 
         <Card className="lg:col-span-2">
           <CardHeader className="flex-row items-center gap-2 space-y-0">
-            <span className="flex size-8 items-center justify-center rounded-full bg-[var(--badge-red-bg)] text-[var(--badge-red-fg)]">
+            <span className="flex size-8 items-center justify-center rounded-full bg-(--badge-red-bg) text-(--badge-red-fg)">
               <Wallet className="size-4" />
             </span>
             <div>

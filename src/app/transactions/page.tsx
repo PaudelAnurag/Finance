@@ -98,7 +98,7 @@ export default function TransactionsPage() {
         </CardContent>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-640 text-sm">
             <thead>
               <tr className="border-t text-left text-xs text-muted-foreground">
                 <th className="px-5 py-2.5 font-medium">Date</th>

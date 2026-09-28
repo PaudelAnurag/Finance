@@ -122,7 +122,7 @@ export default function UploadDataPage() {
 
         <Card>
           <CardContent className="flex flex-wrap items-center gap-3 pt-5">
-            <span className="flex size-9 items-center justify-center rounded-full bg-[var(--badge-blue-bg)] text-accent">
+            <span className="flex size-9 items-center justify-center rounded-full bg-(--badge-blue-bg) text-accent">
               <Database className="size-4" />
             </span>
             <div className="min-w-0 flex-1 text-sm">
@@ -164,7 +164,7 @@ export default function UploadDataPage() {
         {showPanel && (
           <>
             {problem && !checked.fatalError && (
-              <p role="alert" className="rounded-lg border border-negative/30 bg-[var(--badge-red-bg)] px-4 py-3 text-sm">
+              <p role="alert" className="rounded-lg border border-negative/30 bg-(--badge-red-bg) px-4 py-3 text-sm">
                 {problem}
               </p>
             )}
