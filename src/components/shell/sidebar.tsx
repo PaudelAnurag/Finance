@@ -16,26 +16,26 @@ import {
 import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
-// const nav = [
-//   { label: "Dashboard", href: "/", icon: LayoutGrid },
-//   { label: "Ask Finance AI", href: "/ask-finance", icon: Sparkles },
-//   { label: "Cash Flow", href: "/cash-flow", icon: LineChart },
-//   { label: "Transactions", href: "/transactions", icon: Receipt },
-//   { label: "Reports", href: "/reports", icon: FileText },
-//   { label: "Upload Data", href: "/upload-data", icon: Cloud },
-//   { label: "Team & Users", href: "/team", icon: Users },
-//   { label: "Settings", href: "/settings", icon: Settings },
-// ];
 const nav = [
   { label: "Dashboard", href: "/", icon: LayoutGrid },
   { label: "Ask Finance AI", href: "/ask-finance", icon: Sparkles },
-  { label: "Cash Flow", href: "#", icon: LineChart },
+  { label: "Cash Flow", href: "/cash-flow", icon: LineChart },
   { label: "Transactions", href: "/transactions", icon: Receipt },
-  { label: "Reports", href: "#", icon: FileText },
+  { label: "Reports", href: "/reports", icon: FileText },
   { label: "Upload Data", href: "/upload-data", icon: Cloud },
-  { label: "Team & Users", href: "#", icon: Users },
-  { label: "Settings", href: "#", icon: Settings },
+  { label: "Team & Users", href: "/team", icon: Users },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
+// const nav = [
+//   { label: "Dashboard", href: "/", icon: LayoutGrid },
+//   { label: "Ask Finance AI", href: "/ask-finance", icon: Sparkles },
+//   { label: "Cash Flow", href: "#", icon: LineChart },
+//   { label: "Transactions", href: "/transactions", icon: Receipt },
+//   { label: "Reports", href: "#", icon: FileText },
+//   { label: "Upload Data", href: "/upload-data", icon: Cloud },
+//   { label: "Team & Users", href: "#", icon: Users },
+//   { label: "Settings", href: "#", icon: Settings },
+// ];
 
 export function Sidebar() {
   const pathname = usePathname();
