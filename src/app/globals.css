@@ -1,26 +1,95 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f6f9;
+  --foreground: #121826;
+  --card: #ffffff;
+  --card-foreground: #121826;
+  --muted: #eef1f6;
+  --muted-foreground: #64748b;
+  --border: #e6e9f0;
+  --input: #d7dce6;
+  --ring: #2f6feb;
+
+  --sidebar: #101a33;
+  --sidebar-foreground: #c7cee0;
+  --sidebar-active: #2f6feb;
+  --sidebar-border: #1d2a4c;
+
+  --primary: #101a33;
+  --primary-foreground: #ffffff;
+  --accent: #2f6feb;
+  --accent-foreground: #ffffff;
+  --secondary: #eef1f6;
+  --secondary-foreground: #121826;
+
+  --risk-high: #dc3d3d;
+  --risk-medium: #e08a1e;
+  --risk-low: #16a34a;
+  --positive: #16a34a;
+  --negative: #dc3d3d;
+
+  --badge-blue-bg: #e6edff;
+  --badge-blue-fg: #2f6feb;
+  --badge-green-bg: #e3f8ec;
+  --badge-green-fg: #16a34a;
+  --badge-red-bg: #fde9e9;
+  --badge-red-fg: #dc3d3d;
+  --badge-purple-bg: #f1e9fd;
+  --badge-purple-fg: #8b3fe0;
+  --badge-orange-bg: #fdefe0;
+  --badge-orange-fg: #e08a1e;
+  --badge-teal-bg: #e1f6f5;
+  --badge-teal-fg: #0f9c94;
+
+  --radius: 0.875rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-border: var(--sidebar-border);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-risk-high: var(--risk-high);
+  --color-risk-medium: var(--risk-medium);
+  --color-risk-low: var(--risk-low);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
 }
