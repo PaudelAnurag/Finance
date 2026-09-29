@@ -2,10 +2,9 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore } from "react";
 
-import { Transaction, TransactionStatus, TransactionType, transactions as demoTransactions } from "@/data/mock-transactions";
+import { Transaction, TransactionStatus, TransactionType } from "@/data/mock-transactions";
 import type { CsvAnalysis } from "@/lib/csv/analyze";
-import { buildDemoDataset } from "@/lib/dataset/demo";
-import { buildCsvDataset } from "@/lib/dataset/from-transactions";
+import { buildCsvDataset, buildEmptyDataset } from "@/lib/dataset/from-transactions";
 import type { Dataset } from "@/lib/dataset/types";
 import { createPersistentStore } from "@/lib/persistent-store";
 
@@ -77,15 +76,14 @@ const Ctx = createContext<DatasetApi | null>(null);
 export function DatasetProvider({ children }: { children: React.ReactNode }) {
   const raw = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
   const stored = useMemo(() => parseStored(raw), [raw]);
-  const [demoList, setDemoList] = useState<Transaction[]>(demoTransactions);
+  // No CSV uploaded yet: start empty, not demo numbers — every page shows 0 until real data exists.
+  const [manualList, setManualList] = useState<Transaction[]>([]);
 
-  const dataset = useMemo(
-    () =>
-      stored
-        ? buildCsvDataset(fromRows(stored.rows), { fileName: stored.fileName, duplicateCount: stored.duplicateCount })
-        : buildDemoDataset(demoList),
-    [stored, demoList],
-  );
+  const dataset = useMemo(() => {
+    if (stored) return buildCsvDataset(fromRows(stored.rows), { fileName: stored.fileName, duplicateCount: stored.duplicateCount });
+    if (manualList.length === 0) return buildEmptyDataset();
+    return buildCsvDataset(manualList, { fileName: "Manually added transactions", duplicateCount: 0 });
+  }, [stored, manualList]);
 
   const applyCsv = useCallback((analysis: CsvAnalysis) => {
     const list: Transaction[] = analysis.transactions.map((t) => ({
@@ -115,7 +113,7 @@ export function DatasetProvider({ children }: { children: React.ReactNode }) {
     (t: Omit<Transaction, "id">) => {
       const tx: Transaction = { ...t, id: `t-${Date.now()}` };
       if (stored) store.set(JSON.stringify({ ...stored, rows: [...toRows([tx]), ...stored.rows] } satisfies StoredCsv));
-      else setDemoList((prev) => [tx, ...prev]);
+      else setManualList((prev) => [tx, ...prev]);
     },
     [stored],
   );

@@ -11,18 +11,13 @@ export function Topbar({ title, subtitle }: { title: string; subtitle: string })
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="flex items-start justify-between gap-4 px-6 pt-8 pb-6 md:px-10">
+    <header className="sticky top-0 z-20 flex items-start justify-between gap-4 border-b bg-background/95 px-6 py-5 backdrop-blur md:px-10">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        <button className="hidden items-center gap-2 rounded-lg border bg-card px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted sm:flex">
-          <Calendar className="size-4" />
-          Apr 1, 2025 – Apr 30, 2025
-          <ChevronDown className="size-3.5" />
-        </button>
         <button className="relative flex size-9 items-center justify-center rounded-lg border bg-card hover:bg-muted" aria-label="Notifications">
           <Bell className="size-4 text-muted-foreground" />
           <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-risk-high text-[10px] font-medium text-white">3</span>

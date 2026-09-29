@@ -39,7 +39,7 @@ export function RevenueAnswer() {
       <p className="mt-2 text-[14px] text-muted-foreground">Here&apos;s a breakdown of revenue:</p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-lg border p-4">
+        <div className="flex flex-col justify-center rounded-lg border p-4">
           <p className="text-xs text-muted-foreground">Total Revenue</p>
           <p className="text-xl font-semibold tracking-tight">{fmt(r.total, { compact: true })}</p>
           {r.deltaPct !== null && (
@@ -58,7 +58,7 @@ export function RevenueAnswer() {
         {r.bySource.length > 0 ? (
           <>
             <RevenueDonut items={r.bySource} total={r.total} />
-            <div className="flex-1 space-y-2">
+            <div className="w-full max-w-md flex-1 space-y-2">
               <p className="text-xs font-medium text-muted-foreground">Revenue by Source</p>
               {r.bySource.map((s) => (
                 <div key={s.label} className="flex items-center gap-2 text-[13px]">

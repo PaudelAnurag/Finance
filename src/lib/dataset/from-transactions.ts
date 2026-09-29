@@ -293,3 +293,16 @@ export function buildCsvDataset(
     },
   };
 }
+
+/** No data yet: every number is 0 / empty until a CSV is uploaded (or a transaction is added). */
+export function buildEmptyDataset(): Dataset {
+  const zero = buildCsvDataset([], { fileName: "", duplicateCount: 0 });
+  return {
+    ...zero,
+    source: "empty",
+    fileName: null,
+    snapshotNote: "Upload a CSV (or add a transaction) to see your real numbers here.",
+    cashNote: null,
+    reports: { ...zero.reports, note: "Upload a CSV to generate real financial statements — nothing has been imported yet." },
+  };
+}

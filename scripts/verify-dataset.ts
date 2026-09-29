@@ -6,9 +6,8 @@ import { sampleCsvRows } from "../src/data/mock-upload";
 import { analyzeCsv, buildCsv } from "../src/lib/csv/analyze";
 import { balanceSheetRows, cashFlowRows, periodTotals, profitAndLossRows, aiSummary } from "../src/lib/reports";
 import { latestActual, netChange, projectedRunoutMonth } from "../src/lib/cash-flow";
-import { buildCsvDataset } from "../src/lib/dataset/from-transactions";
-import { buildDemoDataset } from "../src/lib/dataset/demo";
-import { transactions as demoTx } from "../src/data/mock-transactions";
+import { buildCsvDataset, buildEmptyDataset } from "../src/lib/dataset/from-transactions";
+import { transactions as sampleTx } from "../src/data/mock-transactions";
 import { renderMoneyTokens } from "../src/lib/format";
 import { summarize } from "../src/lib/transactions";
 
@@ -134,20 +133,28 @@ ok("runway: text when not burning, months when burning", () => {
 
 ok("sample CSV dataset totals match the Transactions page mock", () => {
   const { ds: s } = toDataset(buildCsv(sampleCsvRows));
-  const t = summarize(demoTx);
-  assert.equal(s.snapshot.find((m) => m.key === "revenue")!.value, t.income);
-  assert.equal(s.transactions.length, demoTx.length);
+  const t = summarize(sampleTx);
+  assert.equal(s.snapshot.find((m: { key: string }) => m.key === "revenue")!.value, t.income);
+  assert.equal(s.transactions.length, sampleTx.length);
 });
 
-ok("demo dataset is unchanged and complete", () => {
-  const d = buildDemoDataset(demoTx);
-  assert.equal(d.source, "demo");
-  assert.equal(d.snapshot.find((m) => m.key === "revenue")!.value, 1_240_000);
-  assert.equal(d.snapshot.find((m) => m.key === "cash")!.value, 84_200);
-  assert.equal(d.ask.pending.mode, "overdue");
-  assert.equal(d.ask.pending.total, 18_400);
-  assert.match(d.attention.find((x) => x.id === "overdue-ar")!.text, /^\{m:18400\} overdue receivables$/);
-  assert.equal(periodTotals(d.reports).revenue, 1_240_000);
+ok("empty dataset (no upload yet): every number is 0 / empty, nothing crashes", () => {
+  const d = buildEmptyDataset();
+  assert.equal(d.source, "empty");
+  assert.equal(d.fileName, null);
+  assert.equal(d.transactions.length, 0);
+  assert.deepEqual(
+    d.snapshot.map((m: { value: number | string }) => m.value),
+    [0, 0, 0, "Not burning cash", 0, 0],
+  );
+  assert.ok(d.snapshot.every((m: { delta: unknown }) => m.delta === null));
+  assert.equal(d.attention.length, 0);
+  assert.equal(d.quickInsights.length, 4);
+  assert.equal(d.ask.revenue.total, 0);
+  assert.equal(d.ask.revenue.previous, null);
+  assert.equal(d.ask.pending.items.length, 0);
+  assert.equal(periodTotals(d.reports).revenue, 0);
+  assert.equal(periodTotals(d.reports).netProfit, 0);
 });
 
 console.log(`\n${n} groups passed`);

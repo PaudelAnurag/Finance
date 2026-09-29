@@ -52,7 +52,7 @@ export default function Home() {
   }
 
   return (
-    <AppShell title="Good morning, Anurag" subtitle={`Here's your financial overview for ${settings.companyName}`}>
+    <AppShell title='Good morning, ${settings.companyName}' subtitle={`Here's your financial overview for ${settings.companyName}`}>
       <section aria-label="Financial snapshot" className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         {data.snapshot.map((m) => {
           const style = metricStyle[m.key];

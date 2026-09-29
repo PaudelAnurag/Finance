@@ -74,7 +74,7 @@ export interface AskData {
 }
 
 export interface Dataset {
-  source: "demo" | "csv";
+  source: "csv" | "empty";
   fileName: string | null;
   snapshot: SnapshotMetric[];
   snapshotNote: string | null;

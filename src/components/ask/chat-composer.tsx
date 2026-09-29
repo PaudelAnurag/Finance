@@ -38,12 +38,12 @@ export function ChatComposer({ onAsk }: { onAsk: (question: string) => void }) {
           <Send className="size-4" />
         </button>
       </div>
-      <div className="flex gap-2 overflow-x-auto px-4 pb-3 pt-2.5" aria-label="Suggested questions">
+      <div className="flex flex-wrap gap-x-2 gap-y-1.5 px-4 pb-3 pt-2.5" aria-label="Suggested questions">
         {askFinanceQA.map((qa) => (
           <button
             key={qa.id}
             onClick={() => onAsk(qa.question)}
-            className="shrink-0 rounded-full border border-accent/20 bg-[var(--badge-blue-bg)] px-3 py-1 text-[13px] text-accent hover:bg-accent hover:text-white"
+            className="rounded-full border border-accent/20 bg-[var(--badge-blue-bg)] px-2.5 py-0.5 text-xs text-accent hover:bg-accent hover:text-white"
           >
             {qa.question}
           </button>

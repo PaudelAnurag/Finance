@@ -14,9 +14,11 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen">
+    <div className="min-h-screen">
       <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
+      {/* Fixed sidebar (see above) is taken out of flow, so this column is offset
+          by its width and scrolls independently — the sidebar never moves. */}
+      <div className="flex min-h-screen min-w-0 flex-col md:pl-64">
         <Topbar title={title} subtitle={subtitle} />
         <main className="min-w-0 flex-1 px-6 pb-10 md:px-10">
           <DataBanner />

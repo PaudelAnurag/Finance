@@ -103,13 +103,6 @@ export default function SettingsPage() {
             ))}
           </Select>
         </Row>
-        <Row label="Company Size" htmlFor="size">
-          <Select id="size" value={value.companySize} onChange={(e) => edit({ companySize: e.target.value })}>
-            {companySizeOptions.map((o) => (
-              <option key={o}>{o}</option>
-            ))}
-          </Select>
-        </Row>
       </Section>
 
       <Section title="Data Sources">
@@ -120,7 +113,7 @@ export default function SettingsPage() {
           </div>
         ))}
       </Section>
-
+{/* 
       <Section title="AI Settings">
         <Row label="Forecast Period" htmlFor="forecast">
           <Select id="forecast" value={value.forecastPeriod} onChange={(e) => edit({ forecastPeriod: e.target.value })}>
@@ -165,7 +158,7 @@ export default function SettingsPage() {
             Change password
           </Link>
         </div>
-      </Section>
+      </Section> */}
 
       <div className="mt-6 flex items-center justify-end gap-3">
         {saved !== null && (

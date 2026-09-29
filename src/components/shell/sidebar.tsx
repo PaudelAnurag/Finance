@@ -19,36 +19,26 @@ import { cn } from "@/lib/utils";
 const nav = [
   { label: "Dashboard", href: "/", icon: LayoutGrid },
   { label: "Ask Finance AI", href: "/ask-finance", icon: Sparkles },
-  { label: "Cash Flow", href: "/cash-flow", icon: LineChart },
+  // { label: "Cash Flow", href: "/cash-flow", icon: LineChart },
   { label: "Transactions", href: "/transactions", icon: Receipt },
-  { label: "Reports", href: "/reports", icon: FileText },
+  // { label: "Reports", href: "/reports", icon: FileText },
   { label: "Upload Data", href: "/upload-data", icon: Cloud },
-  { label: "Team & Users", href: "/team", icon: Users },
+  // { label: "Team & Users", href: "/team", icon: Users },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
-// const nav = [
-//   { label: "Dashboard", href: "/", icon: LayoutGrid },
-//   { label: "Ask Finance AI", href: "/ask-finance", icon: Sparkles },
-//   { label: "Cash Flow", href: "#", icon: LineChart },
-//   { label: "Transactions", href: "/transactions", icon: Receipt },
-//   { label: "Reports", href: "#", icon: FileText },
-//   { label: "Upload Data", href: "/upload-data", icon: Cloud },
-//   { label: "Team & Users", href: "#", icon: Users },
-//   { label: "Settings", href: "#", icon: Settings },
-// ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { settings } = useSettings();
 
   return (
-    <aside className="hidden w-64 shrink-0 flex-col bg-sidebar px-3 py-5 md:flex">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 shrink-0 flex-col overflow-y-auto bg-sidebar px-3 py-5 md:flex">
       <div className="flex items-center gap-2.5 px-3 pb-6">
-        <div className="flex size-9 items-center justify-center rounded-lg bg-accent">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent">
           <LineChart className="size-5 text-white" />
         </div>
-        <div>
-          <p className="text-[15px] font-semibold text-white">Finance AI Agent</p>
+        <div className="min-w-0">
+          <p className="truncate text-[15px] font-semibold text-white">Finance AI Agent</p>
           <p className="truncate text-xs text-sidebar-foreground">{settings.companyName}</p>
         </div>
       </div>
@@ -66,7 +56,7 @@ export function Sidebar() {
                 isActive && "bg-sidebar-active font-medium text-white hover:bg-sidebar-active",
               )}
             >
-              <Icon className="size-4.5" />
+              <Icon className="size-4.5 shrink-0" />
               {label}
             </Link>
           );
@@ -74,10 +64,10 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto flex items-center gap-2.5 rounded-lg border border-sidebar-border px-3 py-2.5">
-        <div className="flex size-8 items-center justify-center rounded-md bg-white/5 text-sidebar-foreground">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/5 text-sidebar-foreground">
           <Receipt className="size-4" />
         </div>
-        <div className="leading-tight">
+        <div className="min-w-0 leading-tight">
           <p className="truncate text-xs font-medium text-white">{settings.companyName}</p>
           <p className="truncate text-[11px] text-sidebar-foreground">SME · {settings.industry}</p>
         </div>

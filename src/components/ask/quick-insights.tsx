@@ -19,7 +19,7 @@ export function QuickInsights({ onAsk }: { onAsk: (question: string) => void }) 
   const { text } = useMoney();
   const { quickInsights } = useDataset();
   return (
-    <div className="flex w-full max-w-xs shrink-0 flex-col gap-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
+    <div className="flex w-full max-w-xs shrink-0 flex-col gap-4">
       <Card>
         <CardHeader>
           <CardTitle className="text-foreground text-[15px] font-semibold">Quick Insights</CardTitle>
@@ -33,8 +33,8 @@ export function QuickInsights({ onAsk }: { onAsk: (question: string) => void }) 
             >
               <IconBadge icon={toneIcon[i.tone]} tone={i.tone} />
               <span className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{i.title}</p>
-                <p className="truncate text-xs text-muted-foreground">{text(i.detail)}</p>
+                <p className="text-sm font-medium leading-snug">{i.title}</p>
+                <p className="text-xs leading-snug text-muted-foreground">{text(i.detail)}</p>
               </span>
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             </button>

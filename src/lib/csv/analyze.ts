@@ -163,7 +163,7 @@ function buildChecks(a: Omit<CsvAnalysis, "checks">): Check[] {
   return [
     { label: "Every CSV row is accounted for (valid + invalid + blank)", passed: accounted === a.totalDataRows, detail: `${accounted} of ${a.totalDataRows}` },
     { label: "Income + expense transactions equal valid rows", passed: s.incomeCount + s.expenseCount === a.validRows },
-    { label: "Net cash flow equals income - expenses", passed: s.netMinor === s.incomeMinor - s.expenseMinor && s.netMinor === signedSum },
+    { label: "Net cash flow equals income − expenses", passed: s.netMinor === s.incomeMinor - s.expenseMinor && s.netMinor === signedSum },
     { label: "Category totals reconcile to income and expenses", passed: catIncome === s.incomeMinor && catExpense === s.expenseMinor },
     { label: "Monthly totals reconcile to net cash flow", passed: monthlyNet === s.netMinor },
     {

@@ -102,7 +102,10 @@ export default function ReportsPage() {
               <li key={s}>{s}</li>
             ))}
           </ul>
-          <p className="mt-3 text-xs text-muted-foreground">{source === "csv" ? "Summary generated from your uploaded data" : "Mock summary generated from Phase 1 data"} — no LLM connected yet.</p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            {source === "csv" ? "Summary generated from your uploaded data" : "Upload a CSV to generate a real summary"} — no LLM
+            connected yet.
+          </p>
         </CardContent>
       </Card>
     </AppShell>
