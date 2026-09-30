@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 
 import type { ApiSettings } from "../src/lib/api-settings";
 import { defaultApiSettings } from "../src/lib/api-settings";
-import { fetchAndAnalyzeApi } from "../src/lib/api/analyze";
+import { authHeaders, fetchAndAnalyzeApi } from "../src/lib/api/analyze";
 import { getPath } from "../src/lib/api/path";
 
 let n = 0;
@@ -69,9 +69,12 @@ await ok("custom field names + nested response path + custom type words", async 
   });
   const { analysis } = await fetchAndAnalyzeApi(custom);
   assert.equal(analysis.fatalError, null, analysis.fatalError ?? "");
-  assert.equal(analysis.validRows, 2);
-  // "posted" isn't Completed/Pending -> both rows should fail status validation
-  assert.equal(analysis.invalidRows, 0); // wait — status defaults required; check below instead
+  // "posted" isn't Completed/Pending, so both rows fail status validation —
+  // proves custom field names + nested path + custom type words all resolved
+  // correctly up to that point (date/description/category/type/amount all parsed).
+  assert.equal(analysis.invalidRows, 2);
+  assert.equal(analysis.validRows, 0);
+  assert.ok(analysis.issues.every((i) => /Invalid status: "posted"/.test(i.message)));
 });
 
 await ok("unrecognized status value is a validation error, not silently accepted", async () => {
@@ -140,6 +143,17 @@ await ok("bearer auth header is sent when configured", async () => {
   }) as typeof fetch;
   await fetchAndAnalyzeApi(cfg({ authScheme: "bearer", apiKey: "secret123" }));
   assert.equal(seenAuth, "Bearer secret123");
+});
+
+await ok("regression: bearer scheme sends 'Authorization: Bearer <key>' exactly, never a raw 'bearer:' header", () => {
+  const h = authHeaders(cfg({ authScheme: "bearer", apiKey: "finance-test-key" })) as Record<string, string>;
+  assert.deepEqual(h, { Authorization: "Bearer finance-test-key" });
+  assert.equal("bearer" in h, false);
+  assert.equal("Authorization" in h, true);
+});
+
+await ok("none scheme sends no auth header even if a key happens to be set", () => {
+  assert.deepEqual(authHeaders(cfg({ authScheme: "none", apiKey: "finance-test-key" })), {});
 });
 
 await ok("custom header auth is sent under the configured header name", async () => {

@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 
 import { CurrencyProvider } from "@/lib/currency";
+import { ApiSettingsProvider } from "@/lib/api-settings";
 import { DatasetProvider } from "@/lib/dataset/context";
 import { HydrationGate } from "@/lib/hydration";
 import { SettingsProvider } from "@/lib/settings";
@@ -19,9 +20,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen">
         <CurrencyProvider>
           <SettingsProvider>
-            <DatasetProvider>
-              <HydrationGate>{children}</HydrationGate>
-            </DatasetProvider>
+            <ApiSettingsProvider>
+              <DatasetProvider>
+                <HydrationGate>{children}</HydrationGate>
+              </DatasetProvider>
+            </ApiSettingsProvider>
           </SettingsProvider>
         </CurrencyProvider>
       </body>

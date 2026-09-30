@@ -18,6 +18,7 @@ import {
   responseStyleOptions,
   securityItems,
 } from "@/data/mock-settings";
+import { ApiSettings, useApiSettings } from "@/lib/api-settings";
 import { currencyOptions, useCurrency } from "@/lib/currency";
 import { AppSettings, useSettings } from "@/lib/settings";
 
@@ -69,6 +70,23 @@ export default function SettingsPage() {
     setSaved(persisted);
   }
 
+  // Separate provider/store on purpose (Upload Data → Connect via API is a distinct
+  // settings domain from company/business settings) — but exactly ONE UI edits it,
+  // and exactly ONE place turns it into request headers: authHeaders() in lib/api/analyze.ts.
+  const { apiSettings, save: saveApi } = useApiSettings();
+  const [apiDraft, setApiDraft] = useState<Partial<ApiSettings>>({});
+  const [apiSaved, setApiSaved] = useState<null | boolean>(null);
+  const apiDraftValue: ApiSettings = { ...apiSettings, ...apiDraft };
+  const editApi = (patch: Partial<ApiSettings>) => {
+    setApiDraft((d) => ({ ...d, ...patch }));
+    setApiSaved(null);
+  };
+  function commitApi() {
+    const persisted = saveApi(apiDraftValue);
+    setApiDraft({});
+    setApiSaved(persisted);
+  }
+
   return (
     <AppShell title="Settings" subtitle="Manage your business and Finance AI preferences">
       <Section title="Business">
@@ -96,58 +114,67 @@ export default function SettingsPage() {
             ))}
           </Select>
         </Row>
-        {/* <Row label="Fiscal Year" htmlFor="fiscal">
-          <Select id="fiscal" value={value.fiscalYear} onChange={(e) => edit({ fiscalYear: e.target.value })}>
-            {fiscalYearOptions.map((o) => (
-              <option key={o}>{o}</option>
-            ))}
-          </Select>
-        </Row> */}
-        {/* <Row label="Company Size" htmlFor="size">
-          <Select id="size" value={value.companySize} onChange={(e) => edit({ companySize: e.target.value })}>
-            {companySizeOptions.map((o) => (
-              <option key={o}>{o}</option>
-            ))}
-          </Select>
-        </Row> */}
       </Section>
 
       <Section title="API Connection">
-        <p className="pb-3 pt-1 text-[13px] text-muted-foreground">
-          Point this at your own company&apos;s data API. Nothing is hardcoded — each company sets its own URL and key
-          here, used only from the Upload Data page.
-        </p>
         <Row label="API URL" htmlFor="api-url">
           <Input
             id="api-url"
-            type="url"
-            placeholder="https://api.yourcompany.com/transactions"
-            value={value.apiUrl}
-            onChange={(e) => edit({ apiUrl: e.target.value })}
+            placeholder="/api/transactions  (or https://api.yourcompany.com/transactions)"
+            value={apiDraftValue.url}
+            onChange={(e) => editApi({ url: e.target.value })}
           />
         </Row>
-        <Row label="Auth Header" htmlFor="api-header">
-          <Input
-            id="api-header"
-            placeholder="Authorization"
-            value={value.apiKeyHeader}
-            onChange={(e) => edit({ apiKeyHeader: e.target.value })}
-          />
+        <Row label="Authentication" htmlFor="api-auth-scheme">
+          <Select
+            id="api-auth-scheme"
+            value={apiDraftValue.authScheme}
+            onChange={(e) => editApi({ authScheme: e.target.value as ApiSettings["authScheme"] })}
+          >
+            <option value="none">None</option>
+            <option value="bearer">Bearer Token</option>
+            <option value="header">Custom Header</option>
+          </Select>
         </Row>
-        <Row label="API Key" htmlFor="api-key">
-          <Input
-            id="api-key"
-            type="password"
-            autoComplete="off"
-            placeholder="Sent as the header above"
-            value={value.apiKey}
-            onChange={(e) => edit({ apiKey: e.target.value })}
-          />
-        </Row>
-        <p className="pt-3 text-xs text-muted-foreground">
-          The key is stored only in this browser (never sent anywhere but your API). Expected response: a JSON array of
-          transactions with date, description, category, type, amount, status.
-        </p>
+        {apiDraftValue.authScheme === "header" && (
+          <Row label="Header Name" htmlFor="api-header-name">
+            <Input
+              id="api-header-name"
+              placeholder="x-api-key"
+              value={apiDraftValue.headerName}
+              onChange={(e) => editApi({ headerName: e.target.value })}
+            />
+          </Row>
+        )}
+        {apiDraftValue.authScheme !== "none" && (
+          <Row label="API Key" htmlFor="api-key">
+            <Input
+              id="api-key"
+              type="password"
+              autoComplete="off"
+              placeholder={apiDraftValue.authScheme === "bearer" ? "Sent as Authorization: Bearer <key>" : "Sent as the header above"}
+              value={apiDraftValue.apiKey}
+              onChange={(e) => editApi({ apiKey: e.target.value })}
+            />
+          </Row>
+        )}
+        <div className="flex items-center justify-between py-3">
+          <p className="text-xs text-muted-foreground">
+            {apiDraftValue.authScheme === "none"
+              ? "No authentication header will be sent."
+              : apiDraftValue.authScheme === "bearer"
+                ? "Sends: Authorization: Bearer <your key>"
+                : `Sends: ${apiDraftValue.headerName || "x-api-key"}: <your key>`}
+          </p>
+          <Button size="sm" variant="outline" onClick={commitApi}>
+            Save API settings
+          </Button>
+        </div>
+        {apiSaved !== null && (
+          <p role="status" className="pb-1 pt-1 text-[13px] text-muted-foreground">
+            {apiSaved ? "Saved." : "Applied for this session, but this browser blocked saving it."}
+          </p>
+        )}
       </Section>
 
       <Section title="Data Sources">
@@ -159,11 +186,11 @@ export default function SettingsPage() {
         ))}
         <div className="flex items-center justify-between py-3 text-sm">
           <span>API</span>
-          <Badge tone={value.apiUrl ? "green" : "gray"}>{value.apiUrl ? "Configured" : "Not configured"}</Badge>
+          <Badge tone={apiDraftValue.url ? "green" : "gray"}>{apiDraftValue.url ? "Configured" : "Not configured"}</Badge>
         </div>
       </Section>
 
-      {/* <Section title="AI Settings">
+      <Section title="AI Settings">
         <Row label="Forecast Period" htmlFor="forecast">
           <Select id="forecast" value={value.forecastPeriod} onChange={(e) => edit({ forecastPeriod: e.target.value })}>
             {forecastPeriodOptions.map((o) => (
@@ -178,9 +205,9 @@ export default function SettingsPage() {
             ))}
           </Select>
         </Row>
-      </Section> */}
+      </Section>
 
-      {/* <Section title="Notifications">
+      <Section title="Notifications">
         {notificationOptions.map((n) => (
           <label key={n.id} className="flex cursor-pointer items-center gap-3 py-3 text-sm">
             <input
@@ -192,9 +219,9 @@ export default function SettingsPage() {
             {n.label}
           </label>
         ))}
-      </Section> */}
+      </Section>
 
-      {/* <Section title="Security">
+      <Section title="Security">
         {securityItems.map((s) => (
           <div key={s.label} className="flex items-center justify-between py-3 text-sm">
             <span className="text-muted-foreground">{s.label}</span>
@@ -207,7 +234,7 @@ export default function SettingsPage() {
             Change password
           </Link>
         </div>
-      </Section> */}
+      </Section>
 
       <div className="mt-6 flex items-center justify-end gap-3">
         {saved !== null && (

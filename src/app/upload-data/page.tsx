@@ -15,7 +15,6 @@ import { FilterChips } from "@/components/ui/filter-chips";
 import { Toast } from "@/components/ui/toast";
 import { connectedSources, sampleCsvRows, sampleCsvWithErrors, uploadConstraints } from "@/data/mock-upload";
 import { CsvAnalysis, analyzeCsv, buildCsv } from "@/lib/csv/analyze";
-import { jsonToCsv } from "@/lib/csv/from-json";
 import { useDataset, useDatasetActions } from "@/lib/dataset/context";
 
 function formatSize(bytes: number) {
@@ -53,12 +52,11 @@ export default function UploadDataPage() {
   const [checked, setChecked] = useState<CsvAnalysis | null>(null); // last file/response that was checked
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [apiError, setApiError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; detail: string } | null>(null);
   const closeToast = useCallback(() => setToast(null), []);
 
-  function process(text: string, fileName: string, sizeBytes: number) {
-    const analysis = analyzeCsv(text, { fileName, fileSizeBytes: sizeBytes });
+  /** Shared by both import paths: apply a validated analysis, or leave the dataset untouched and show why. */
+  function finish(analysis: CsvAnalysis) {
     setChecked(analysis);
     setToast(null);
     if (blockingProblem(analysis)) return;
@@ -68,32 +66,18 @@ export default function UploadDataPage() {
     setToast({
       message: "All dashboards updated",
       detail:
-        `${analysis.validRows} transactions from ${fileName} now drive Dashboard, Ask Finance AI, Cash Flow, Transactions and Reports.` +
+        `${analysis.validRows} transactions from ${analysis.fileName} now drive Dashboard, Ask Finance AI, Cash Flow, Transactions and Reports.` +
         (warnings ? ` ${warnings} warning${warnings === 1 ? "" : "s"} noted below.` : "") +
         (persisted ? "" : " Too large to keep across a page refresh — it stays available until you reload."),
     });
   }
 
-  function handleApiFetched(jsonText: string, sourceLabel: string) {
-    setApiError(null);
-    let json: unknown;
-    try {
-      json = JSON.parse(jsonText);
-    } catch {
-      setApiError("The API did not return valid JSON.");
-      return;
-    }
-    const { csv, error: convError } = jsonToCsv(json);
-    if (convError || !csv) {
-      setApiError(convError ?? "Could not read the API response.");
-      return;
-    }
-    process(csv, sourceLabel, jsonText.length);
+  function process(text: string, fileName: string, sizeBytes: number) {
+    finish(analyzeCsv(text, { fileName, fileSizeBytes: sizeBytes }));
   }
 
   async function handleFiles(files: FileList) {
     setError(null);
-    setApiError(null);
     const file = files[0];
     const problem = rejectFile(file);
     if (problem) {
@@ -115,7 +99,6 @@ export default function UploadDataPage() {
 
   function runSample(text: string, fileName: string) {
     setError(null);
-    setApiError(null);
     process(text, fileName, new Blob([text]).size);
   }
 
@@ -152,7 +135,7 @@ export default function UploadDataPage() {
             onDownloadSample={downloadSample}
           />
         ) : (
-          <ApiImport busy={busy} error={apiError} onFetched={handleApiFetched} />
+          <ApiImport busy={busy} onAnalysis={finish} />
         )}
 
         <Card>

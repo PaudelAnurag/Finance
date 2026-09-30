@@ -6,62 +6,36 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useSettings } from "@/lib/settings";
-import { cn } from "@/lib/utils";
+import { useApiSettings } from "@/lib/api-settings";
+// Single source of truth for the request: same fetch + same authHeaders()
+// (none / bearer / header) that scripts/verify-api.ts exercises. No header
+// building happens in this component anymore.
+import { fetchAndAnalyzeApi } from "@/lib/api/analyze";
+import type { CsvAnalysis } from "@/lib/csv/analyze";
 
-export function ApiImport({
-  busy,
-  error,
-  onFetched,
-}: {
-  busy: boolean;
-  error: string | null;
-  onFetched: (text: string, sourceLabel: string) => void;
-}) {
-  const { settings } = useSettings();
+export function ApiImport({ busy, onAnalysis }: { busy: boolean; onAnalysis: (analysis: CsvAnalysis) => void }) {
+  const { apiSettings } = useApiSettings();
   const [fetching, setFetching] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
 
-  const configured = settings.apiUrl.trim().length > 0;
-  let host = settings.apiUrl;
-  try {
-    host = configured ? new URL(settings.apiUrl).host : "";
-  } catch {
-    // leave as-is; treated as invalid below
-  }
+  const configured = apiSettings.url.trim().length > 0;
+  const isBusy = busy || fetching;
 
   async function run() {
-    setLocalError(null);
-    if (!configured) return;
     setFetching(true);
     try {
-      const headers: Record<string, string> = {};
-      if (settings.apiKey.trim()) headers[settings.apiKeyHeader.trim() || "Authorization"] = settings.apiKey.trim();
-      const res = await fetch(settings.apiUrl, { headers });
-      if (!res.ok) {
-        setLocalError(`API returned ${res.status} ${res.statusText || ""}.`.trim());
-        return;
-      }
-      const text = await res.text();
-      let json: unknown;
-      try {
-        json = JSON.parse(text);
-      } catch {
-        setLocalError("The API did not return valid JSON.");
-        return;
-      }
-      onFetched(JSON.stringify(json), `API: ${host || "your endpoint"}`);
-    } catch {
-      setLocalError(
-        "Could not reach the API. Check the URL in Settings, and that the server allows requests from this browser (CORS).",
-      );
+      const { analysis } = await fetchAndAnalyzeApi(apiSettings);
+      onAnalysis(analysis);
     } finally {
       setFetching(false);
     }
   }
 
-  const anyError = error ?? localError;
-  const isBusy = busy || fetching;
+  const authLabel =
+    apiSettings.authScheme === "bearer"
+      ? "Authorization: Bearer …"
+      : apiSettings.authScheme === "header"
+        ? `${apiSettings.headerName || "x-api-key"}: …`
+        : "No authentication";
 
   return (
     <Card>
@@ -76,10 +50,9 @@ export function ApiImport({
                 <Plug className="size-4" />
               </span>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{settings.apiUrl}</p>
-                <p className="text-xs text-muted-foreground">
-                  Sent as <code className="font-mono">{settings.apiKeyHeader || "Authorization"}</code>
-                  {settings.apiKey ? " (key set)" : " — no key set"}
+                <p className="truncate text-sm font-medium">{apiSettings.name.trim() || apiSettings.url}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {apiSettings.url} · {authLabel}
                 </p>
               </div>
             </div>
@@ -89,13 +62,13 @@ export function ApiImport({
             </Button>
           </div>
         ) : (
-          <div className={cn("flex flex-col items-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 text-center")}>
+          <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 text-center">
             <span className="flex size-11 items-center justify-center rounded-full bg-[var(--badge-blue-bg)] text-accent">
               <SettingsIcon className="size-5" />
             </span>
             <p className="text-sm font-medium">No API configured yet</p>
             <p className="max-w-sm text-[13px] text-muted-foreground">
-              Every company has a different data API, so this isn&apos;t built in — set your URL and key in Settings first.
+              Every company has a different data API, so this isn&apos;t built in — set your URL and auth in Settings first.
             </p>
             <Link href="/settings" className="text-[13px] font-medium text-accent hover:underline">
               Go to Settings →
@@ -103,15 +76,9 @@ export function ApiImport({
           </div>
         )}
 
-        {anyError && (
-          <p role="alert" className="text-[13px] text-negative">
-            {anyError}
-          </p>
-        )}
         <p className="text-xs text-muted-foreground">
-          Expected: a JSON array of transactions (or <code className="font-mono">{"{ transactions: [...] }"}</code>), each with
-          date, description, category, type, amount and status. Fetched and calculated in your browser only — nothing is stored
-          on a server.
+          Expected: a JSON array of transactions (path and field names configurable in Settings). Fetched and calculated in
+          your browser only — nothing is stored on a server.
         </p>
       </CardContent>
     </Card>

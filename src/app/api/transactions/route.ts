@@ -2004,19 +2004,38 @@ const transactions = [
     "status": "Completed"
   }
 ];
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Authorization, Content-Type",
+    },
+  });
+}
 
 export async function GET(request: Request) {
   const authorization = request.headers.get("authorization");
 
-  if (authorization !== `Bearer ${API_KEY}`) {
+  if (!API_KEY || authorization !== `Bearer ${API_KEY}`) {
     return NextResponse.json(
       {
         success: false,
         message: "Unauthorized",
       },
-      { status: 401 },
+      {
+        status: 401,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+        },
+      },
     );
   }
-  
-  return NextResponse.json(transactions);
+
+  return NextResponse.json(transactions, {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
 }

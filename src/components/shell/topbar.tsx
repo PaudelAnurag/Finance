@@ -6,7 +6,13 @@ import { useState } from "react";
 
 import { currencyOptions, useCurrency } from "@/lib/currency";
 
-export function Topbar({ title, subtitle }: { title: string; subtitle: string }) {
+export function Topbar({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle: string;
+}) {
   const { currency, setCurrency } = useCurrency();
   const [open, setOpen] = useState(false);
 
@@ -20,12 +26,17 @@ export function Topbar({ title, subtitle }: { title: string; subtitle: string })
       <div className="flex shrink-0 items-center gap-3">
         <button className="hidden items-center gap-2 rounded-lg border bg-card px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted sm:flex">
           <Calendar className="size-4" />
-          Apr 1, 2025 – Apr 30, 2025
+          FY 2026/27
           <ChevronDown className="size-3.5" />
         </button>
-        <button className="relative flex size-9 items-center justify-center rounded-lg border bg-card hover:bg-muted" aria-label="Notifications">
+        <button
+          className="relative flex size-9 items-center justify-center rounded-lg border bg-card hover:bg-muted"
+          aria-label="Notifications"
+        >
           <Bell className="size-4 text-muted-foreground" />
-          <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-risk-high text-[10px] font-medium text-white">3</span>
+          <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-risk-high text-[10px] font-medium text-white">
+            3
+          </span>
         </button>
 
         <div className="relative">
@@ -33,7 +44,9 @@ export function Topbar({ title, subtitle }: { title: string; subtitle: string })
             onClick={() => setOpen((v) => !v)}
             className="flex items-center gap-2 rounded-lg border bg-card py-1.5 pl-1.5 pr-2.5 hover:bg-muted"
           >
-            <span className="flex size-7 items-center justify-center rounded-full bg-primary text-[11px] font-medium text-white">AP</span>
+            <span className="flex size-7 items-center justify-center rounded-full bg-primary text-[11px] font-medium text-white">
+              AP
+            </span>
             <ChevronDown className="size-3.5 text-muted-foreground" />
           </button>
 
@@ -45,7 +58,9 @@ export function Topbar({ title, subtitle }: { title: string; subtitle: string })
                 onClick={() => setOpen(false)}
               />
               <div className="absolute right-0 z-20 mt-2 w-64 rounded-lg border bg-card p-2 shadow-lg">
-                <p className="px-2 pb-1 pt-1 text-xs font-medium text-muted-foreground">Display currency</p>
+                <p className="px-2 pb-1 pt-1 text-xs font-medium text-muted-foreground">
+                  Display currency
+                </p>
                 <select
                   value={currency}
                   onChange={(e) => {
@@ -62,9 +77,27 @@ export function Topbar({ title, subtitle }: { title: string; subtitle: string })
                   ))}
                 </select>
                 <div className="mt-2 border-t pt-2">
-                  <Link href="/settings" onClick={() => setOpen(false)} className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted">Profile</Link>
-                  <Link href="/settings" onClick={() => setOpen(false)} className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted">Settings</Link>
-                  <Link href="/login" onClick={() => setOpen(false)} className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted">Sign out</Link>
+                  <Link
+                    href="/settings"
+                    onClick={() => setOpen(false)}
+                    className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    href="/settings"
+                    onClick={() => setOpen(false)}
+                    className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
+                  >
+                    Settings
+                  </Link>
+                  <Link
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
+                  >
+                    Sign out
+                  </Link>
                 </div>
               </div>
             </>

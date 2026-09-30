@@ -11,7 +11,10 @@ export interface ApiFetchResult {
   status?: number;
 }
 
-function authHeaders(cfg: ApiSettings): HeadersInit {
+// The one and only place request auth headers get built. Settings' "API
+// Connection" section is the only UI that edits ApiSettings; ApiImport /
+// fetchAndAnalyzeApi is the only code path that fetches with them.
+export function authHeaders(cfg: ApiSettings): HeadersInit {
   if (cfg.authScheme === "bearer" && cfg.apiKey) return { Authorization: `Bearer ${cfg.apiKey}` };
   if (cfg.authScheme === "header" && cfg.apiKey) return { [cfg.headerName || "x-api-key"]: cfg.apiKey };
   return {};

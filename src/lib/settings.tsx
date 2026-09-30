@@ -13,19 +13,17 @@ export interface AppSettings {
   forecastPeriod: string;
   responseStyle: string;
   notifications: Record<string, boolean>;
-  /** Per-company data API — set here, never hardcoded, since every customer has a different one. */
-  apiUrl: string;
-  apiKeyHeader: string;
-  apiKey: string;
+  // Note: the company's data API connection lives in @/lib/api-settings
+  // (useApiSettings), not here — it's a separate settings domain edited by
+  // its own "API Connection" section in Settings, with its own request-header
+  // logic (authHeaders() in @/lib/api/analyze.ts). Don't re-add api* fields
+  // here; that's exactly the duplicate-auth-implementation bug this avoids.
 }
 
 export const defaultSettings: AppSettings = {
   ...businessDefaults,
   ...aiDefaults,
   notifications: Object.fromEntries(notificationOptions.map((n) => [n.id, n.enabled])),
-  apiUrl: "",
-  apiKeyHeader: "Authorization",
-  apiKey: "",
 };
 
 const store = createPersistentStore("local", "finance-os:settings:v1");
@@ -43,9 +41,6 @@ function parse(raw: string | null): AppSettings {
       forecastPeriod: str(p.forecastPeriod, defaultSettings.forecastPeriod),
       responseStyle: str(p.responseStyle, defaultSettings.responseStyle),
       notifications: { ...defaultSettings.notifications, ...(typeof p.notifications === "object" && p.notifications ? p.notifications : {}) },
-      apiUrl: typeof p.apiUrl === "string" ? p.apiUrl : defaultSettings.apiUrl,
-      apiKeyHeader: str(p.apiKeyHeader, defaultSettings.apiKeyHeader),
-      apiKey: typeof p.apiKey === "string" ? p.apiKey : defaultSettings.apiKey,
     };
   } catch {
     return defaultSettings;
