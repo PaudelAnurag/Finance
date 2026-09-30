@@ -96,13 +96,58 @@ export default function SettingsPage() {
             ))}
           </Select>
         </Row>
-        <Row label="Fiscal Year" htmlFor="fiscal">
+        {/* <Row label="Fiscal Year" htmlFor="fiscal">
           <Select id="fiscal" value={value.fiscalYear} onChange={(e) => edit({ fiscalYear: e.target.value })}>
             {fiscalYearOptions.map((o) => (
               <option key={o}>{o}</option>
             ))}
           </Select>
+        </Row> */}
+        {/* <Row label="Company Size" htmlFor="size">
+          <Select id="size" value={value.companySize} onChange={(e) => edit({ companySize: e.target.value })}>
+            {companySizeOptions.map((o) => (
+              <option key={o}>{o}</option>
+            ))}
+          </Select>
+        </Row> */}
+      </Section>
+
+      <Section title="API Connection">
+        <p className="pb-3 pt-1 text-[13px] text-muted-foreground">
+          Point this at your own company&apos;s data API. Nothing is hardcoded — each company sets its own URL and key
+          here, used only from the Upload Data page.
+        </p>
+        <Row label="API URL" htmlFor="api-url">
+          <Input
+            id="api-url"
+            type="url"
+            placeholder="https://api.yourcompany.com/transactions"
+            value={value.apiUrl}
+            onChange={(e) => edit({ apiUrl: e.target.value })}
+          />
         </Row>
+        <Row label="Auth Header" htmlFor="api-header">
+          <Input
+            id="api-header"
+            placeholder="Authorization"
+            value={value.apiKeyHeader}
+            onChange={(e) => edit({ apiKeyHeader: e.target.value })}
+          />
+        </Row>
+        <Row label="API Key" htmlFor="api-key">
+          <Input
+            id="api-key"
+            type="password"
+            autoComplete="off"
+            placeholder="Sent as the header above"
+            value={value.apiKey}
+            onChange={(e) => edit({ apiKey: e.target.value })}
+          />
+        </Row>
+        <p className="pt-3 text-xs text-muted-foreground">
+          The key is stored only in this browser (never sent anywhere but your API). Expected response: a JSON array of
+          transactions with date, description, category, type, amount, status.
+        </p>
       </Section>
 
       <Section title="Data Sources">
@@ -112,9 +157,13 @@ export default function SettingsPage() {
             <Badge tone={d.status === "Available" ? "green" : "gray"}>{d.status}</Badge>
           </div>
         ))}
+        <div className="flex items-center justify-between py-3 text-sm">
+          <span>API</span>
+          <Badge tone={value.apiUrl ? "green" : "gray"}>{value.apiUrl ? "Configured" : "Not configured"}</Badge>
+        </div>
       </Section>
-{/* 
-      <Section title="AI Settings">
+
+      {/* <Section title="AI Settings">
         <Row label="Forecast Period" htmlFor="forecast">
           <Select id="forecast" value={value.forecastPeriod} onChange={(e) => edit({ forecastPeriod: e.target.value })}>
             {forecastPeriodOptions.map((o) => (
@@ -129,9 +178,9 @@ export default function SettingsPage() {
             ))}
           </Select>
         </Row>
-      </Section>
+      </Section> */}
 
-      <Section title="Notifications">
+      {/* <Section title="Notifications">
         {notificationOptions.map((n) => (
           <label key={n.id} className="flex cursor-pointer items-center gap-3 py-3 text-sm">
             <input
@@ -143,9 +192,9 @@ export default function SettingsPage() {
             {n.label}
           </label>
         ))}
-      </Section>
+      </Section> */}
 
-      <Section title="Security">
+      {/* <Section title="Security">
         {securityItems.map((s) => (
           <div key={s.label} className="flex items-center justify-between py-3 text-sm">
             <span className="text-muted-foreground">{s.label}</span>

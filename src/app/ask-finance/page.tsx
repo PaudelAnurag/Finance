@@ -71,7 +71,7 @@ export default function AskFinancePage() {
         <div className="min-w-0 flex-1">
           <div
             ref={composerRef}
-            className="sticky top-0 z-20 -mx-6 bg-background/95 px-6 pb-3 pt-1 backdrop-blur md:-mx-6 md:px-10"
+            className="sticky top-0 z-20 -mx-6 bg-background/95 px-6 pb-3 pt-1 backdrop-blur md:-mx-10 md:px-10"
           >
             <ChatComposer onAsk={ask} />
           </div>

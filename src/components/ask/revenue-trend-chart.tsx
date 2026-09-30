@@ -2,10 +2,16 @@
 
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 
+import { EmptyChart } from "@/components/shell/empty-chart";
 import { useMoney } from "@/lib/currency";
 
 export function RevenueTrendChart({ data }: { data: { month: string; value: number }[] }) {
   const { fmt } = useMoney();
+
+  if (data.length === 0) {
+    return <EmptyChart message="No revenue data yet." height={144} />;
+  }
+
   return (
     <div className="h-36 w-full">
       <ResponsiveContainer width="100%" height="100%">

@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { EmptyChart } from "@/components/shell/empty-chart";
 import { useDataset } from "@/lib/dataset/context";
 import { useMoney } from "@/lib/currency";
 
@@ -17,6 +18,11 @@ export function CashChart({ height = 256 }: { height?: number }) {
   const { fmt, currency } = useMoney();
   const { cashSeries } = useDataset();
   const showDots = cashSeries.length <= 6;
+
+  if (cashSeries.length === 0) {
+    return <EmptyChart message="No cash flow yet — upload a CSV or connect an API on the Upload Data page." height={height} />;
+  }
+
   return (
     <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">

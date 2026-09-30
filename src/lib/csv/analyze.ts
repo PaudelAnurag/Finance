@@ -107,7 +107,7 @@ function parseAmount(raw: string): { minor: number } | { error: string } {
   return { minor };
 }
 
-function summarize(transactions: ParsedTransaction[]): Summary {
+export function summarize(transactions: ParsedTransaction[]): Summary {
   const s = emptySummary();
   const cats = new Map<string, CategoryTotal>();
   const months = new Map<string, MonthlyTotal>();
@@ -152,7 +152,7 @@ function summarize(transactions: ParsedTransaction[]): Summary {
 }
 
 /** Independent recomputation so the accuracy panel proves the numbers, not just repeats them. */
-function buildChecks(a: Omit<CsvAnalysis, "checks">): Check[] {
+export function buildChecks(a: Omit<CsvAnalysis, "checks">): Check[] {
   const { summary: s, transactions: tx } = a;
   const signedSum = tx.reduce((sum, t) => sum + (t.type === "Income" ? t.amountMinor : -t.amountMinor), 0);
   const catIncome = s.categories.filter((c) => c.type === "Income").reduce((n, c) => n + c.totalMinor, 0);
@@ -173,7 +173,7 @@ function buildChecks(a: Omit<CsvAnalysis, "checks">): Check[] {
   ];
 }
 
-function base(meta: { fileName: string; fileSizeBytes: number }): Omit<CsvAnalysis, "checks"> {
+export function base(meta: { fileName: string; fileSizeBytes: number }): Omit<CsvAnalysis, "checks"> {
   return {
     fileName: meta.fileName,
     fileSizeBytes: meta.fileSizeBytes,
@@ -191,7 +191,7 @@ function base(meta: { fileName: string; fileSizeBytes: number }): Omit<CsvAnalys
   };
 }
 
-function fatal(meta: { fileName: string; fileSizeBytes: number }, message: string, extra: Partial<CsvAnalysis> = {}): CsvAnalysis {
+export function fatal(meta: { fileName: string; fileSizeBytes: number }, message: string, extra: Partial<CsvAnalysis> = {}): CsvAnalysis {
   return { ...base(meta), fatalError: message, checks: [], ...extra };
 }
 

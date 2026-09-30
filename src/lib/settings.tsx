@@ -13,12 +13,19 @@ export interface AppSettings {
   forecastPeriod: string;
   responseStyle: string;
   notifications: Record<string, boolean>;
+  /** Per-company data API — set here, never hardcoded, since every customer has a different one. */
+  apiUrl: string;
+  apiKeyHeader: string;
+  apiKey: string;
 }
 
 export const defaultSettings: AppSettings = {
   ...businessDefaults,
   ...aiDefaults,
   notifications: Object.fromEntries(notificationOptions.map((n) => [n.id, n.enabled])),
+  apiUrl: "",
+  apiKeyHeader: "Authorization",
+  apiKey: "",
 };
 
 const store = createPersistentStore("local", "finance-os:settings:v1");
@@ -36,6 +43,9 @@ function parse(raw: string | null): AppSettings {
       forecastPeriod: str(p.forecastPeriod, defaultSettings.forecastPeriod),
       responseStyle: str(p.responseStyle, defaultSettings.responseStyle),
       notifications: { ...defaultSettings.notifications, ...(typeof p.notifications === "object" && p.notifications ? p.notifications : {}) },
+      apiUrl: typeof p.apiUrl === "string" ? p.apiUrl : defaultSettings.apiUrl,
+      apiKeyHeader: str(p.apiKeyHeader, defaultSettings.apiKeyHeader),
+      apiKey: typeof p.apiKey === "string" ? p.apiKey : defaultSettings.apiKey,
     };
   } catch {
     return defaultSettings;

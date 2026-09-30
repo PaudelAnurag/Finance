@@ -35,7 +35,8 @@ function change(label: string, pct: number | null, up: string, down: string) {
   return `${label} ${pct > 0 ? up : down} ${Math.abs(pct).toFixed(1)}% compared with the previous month.`;
 }
 
-export function aiSummary(r: ReportInputs) {
+export function aiSummary(r: ReportInputs): string[] {
+  if (r.monthly.length === 0) return ["No data yet — upload a CSV or connect an API to generate a summary."];
   const c = latestMonthChange(r);
   const t = periodTotals(r);
   const lines = c

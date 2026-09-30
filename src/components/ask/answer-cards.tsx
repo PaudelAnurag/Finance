@@ -193,7 +193,7 @@ export function CashflowAnswer() {
           )}
         </p>
       ) : (
-        <p className="text-[14px]">No cash data available.</p>
+        <p className="text-[14px]">No cash data available yet — upload a CSV or connect an API.</p>
       )}
       <div className="mt-4 rounded-lg border p-3">
         <CashChart height={220} />

@@ -52,7 +52,7 @@ export default function Home() {
   }
 
   return (
-    <AppShell title={`Good morning, ${settings.companyName} Team`} subtitle={`Here's your financial overview for ${settings.companyName}`}>
+    <AppShell title="Good morning, Anurag" subtitle={`Here's your financial overview for ${settings.companyName}`}>
       <section aria-label="Financial snapshot" className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         {data.snapshot.map((m) => {
           const style = metricStyle[m.key];
@@ -92,7 +92,7 @@ export default function Home() {
 
         <Card className="lg:col-span-2">
           <CardHeader className="flex-row items-center gap-2 space-y-0">
-            <span className="flex size-8 items-center justify-center rounded-full bg-(--badge-red-bg) text-(--badge-red-fg)">
+            <span className="flex size-8 items-center justify-center rounded-full bg-[var(--badge-red-bg)] text-[var(--badge-red-fg)]">
               <Wallet className="size-4" />
             </span>
             <div>

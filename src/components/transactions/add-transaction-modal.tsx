@@ -78,32 +78,32 @@ function AddTransactionForm({
           ))}
         </Select>
       </Field>
-      {/* <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit" variant="accent">
           Add Transaction
         </Button>
-      </div> */}
+      </div>
     </form>
   );
 }
 
-// export function AddTransactionModal({
-//   open,
-//   defaultDate,
-//   onClose,
-//   onAdd,
-// }: {
-//   open: boolean;
-//   defaultDate: string;
-//   onClose: () => void;
-//   onAdd: (t: Omit<Transaction, "id">) => void;
-// }) {
-//   return (
-//     <Modal open={open} onClose={onClose} title="Add Transaction">
-//       <AddTransactionForm defaultDate={defaultDate} onCancel={onClose} onAdd={onAdd} />
-//     </Modal>
-//   );
-// }
+export function AddTransactionModal({
+  open,
+  defaultDate,
+  onClose,
+  onAdd,
+}: {
+  open: boolean;
+  defaultDate: string;
+  onClose: () => void;
+  onAdd: (t: Omit<Transaction, "id">) => void;
+}) {
+  return (
+    <Modal open={open} onClose={onClose} title="Add Transaction">
+      <AddTransactionForm defaultDate={defaultDate} onCancel={onClose} onAdd={onAdd} />
+    </Modal>
+  );
+}

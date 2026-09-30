@@ -5,14 +5,17 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 
 import { AppShell } from "@/components/shell/app-shell";
+import { ApiImport } from "@/components/upload/api-import";
 import { UploadDropzone } from "@/components/upload/upload-dropzone";
 import { ValidationPanel } from "@/components/upload/validation-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { FilterChips } from "@/components/ui/filter-chips";
 import { Toast } from "@/components/ui/toast";
 import { connectedSources, sampleCsvRows, sampleCsvWithErrors, uploadConstraints } from "@/data/mock-upload";
 import { CsvAnalysis, analyzeCsv, buildCsv } from "@/lib/csv/analyze";
+import { jsonToCsv } from "@/lib/csv/from-json";
 import { useDataset, useDatasetActions } from "@/lib/dataset/context";
 
 function formatSize(bytes: number) {
@@ -46,9 +49,11 @@ function blockingProblem(a: CsvAnalysis): string | null {
 export default function UploadDataPage() {
   const dataset = useDataset();
   const { applyCsv, clearCsv, fileSizeBytes } = useDatasetActions();
-  const [checked, setChecked] = useState<CsvAnalysis | null>(null); // last file that was checked
+  const [source, setSource] = useState<"Upload CSV" | "Connect via API">("Upload CSV");
+  const [checked, setChecked] = useState<CsvAnalysis | null>(null); // last file/response that was checked
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; detail: string } | null>(null);
   const closeToast = useCallback(() => setToast(null), []);
 
@@ -69,8 +74,26 @@ export default function UploadDataPage() {
     });
   }
 
+  function handleApiFetched(jsonText: string, sourceLabel: string) {
+    setApiError(null);
+    let json: unknown;
+    try {
+      json = JSON.parse(jsonText);
+    } catch {
+      setApiError("The API did not return valid JSON.");
+      return;
+    }
+    const { csv, error: convError } = jsonToCsv(json);
+    if (convError || !csv) {
+      setApiError(convError ?? "Could not read the API response.");
+      return;
+    }
+    process(csv, sourceLabel, jsonText.length);
+  }
+
   async function handleFiles(files: FileList) {
     setError(null);
+    setApiError(null);
     const file = files[0];
     const problem = rejectFile(file);
     if (problem) {
@@ -92,6 +115,7 @@ export default function UploadDataPage() {
 
   function runSample(text: string, fileName: string) {
     setError(null);
+    setApiError(null);
     process(text, fileName, new Blob([text]).size);
   }
 
@@ -111,14 +135,25 @@ export default function UploadDataPage() {
   return (
     <AppShell title="Upload Data" subtitle="Import your financial data">
       <div className="space-y-6">
-        <UploadDropzone
-          busy={busy}
-          error={error}
-          onFiles={handleFiles}
-          onSample={() => runSample(buildCsv(sampleCsvRows), "sample-transactions.csv")}
-          onSampleWithErrors={() => runSample(sampleCsvWithErrors, "sample-with-errors.csv")}
-          onDownloadSample={downloadSample}
+        <FilterChips
+          label="Import method"
+          options={["Upload CSV", "Connect via API"] as const}
+          value={source}
+          onChange={setSource}
         />
+
+        {source === "Upload CSV" ? (
+          <UploadDropzone
+            busy={busy}
+            error={error}
+            onFiles={handleFiles}
+            onSample={() => runSample(buildCsv(sampleCsvRows), "sample-transactions.csv")}
+            onSampleWithErrors={() => runSample(sampleCsvWithErrors, "sample-with-errors.csv")}
+            onDownloadSample={downloadSample}
+          />
+        ) : (
+          <ApiImport busy={busy} error={apiError} onFetched={handleApiFetched} />
+        )}
 
         <Card>
           <CardContent className="flex flex-wrap items-center gap-3 pt-5">

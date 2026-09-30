@@ -3,13 +3,13 @@
 export const businessDefaults = {
   companyName: "Acme Components Ltd",
   industry: "Manufacturing",
-  fiscalYear: "July - June",
-  companySize: "11-50 employees",
+  fiscalYear: "July – June",
+  companySize: "11–50 employees",
 };
 
 export const industryOptions = ["Manufacturing", "Retail", "Wholesale & Distribution", "Services", "Technology", "Hospitality", "Other"];
-export const fiscalYearOptions = ["January - December", "April - March", "July - June", "October - September"];
-export const companySizeOptions = ["1-10 employees", "11-50 employees", "51-200 employees", "200+ employees"];
+export const fiscalYearOptions = ["January – December", "April – March", "July – June", "October – September"];
+export const companySizeOptions = ["1–10 employees", "11–50 employees", "51–200 employees", "200+ employees"];
 
 export const dataSources = [
   { name: "CSV / Excel", status: "Available" },

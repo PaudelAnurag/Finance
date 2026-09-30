@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 
 import { AppShell } from "@/components/shell/app-shell";
 import { KpiCard } from "@/components/shell/kpi-card";
-// import { AddTransactionModal } from "@/components/transactions/add-transaction-modal";
+import { AddTransactionModal } from "@/components/transactions/add-transaction-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,11 +54,11 @@ export default function TransactionsPage() {
     <AppShell
       title="Transactions"
       subtitle="View and manage your financial activity"
-      // action={
-      //   <Button variant="accent" onClick={() => setOpen(true)}>
-      //     <Plus /> Add Transaction
-      //   </Button>
-      // }
+      action={
+        <Button variant="accent" onClick={() => setOpen(true)}>
+          <Plus /> Add Transaction
+        </Button>
+      }
     >
       <section aria-label="Transaction summary" className="grid gap-4 sm:grid-cols-3">
         <KpiCard label="Total Income" value={fmt(totals.income, { compact: true })} icon={ArrowUpRight} tone="green" />
@@ -98,7 +98,7 @@ export default function TransactionsPage() {
         </CardContent>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-640 text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-t text-left text-xs text-muted-foreground">
                 <th className="px-5 py-2.5 font-medium">Date</th>
@@ -143,7 +143,7 @@ export default function TransactionsPage() {
         </div>
       </Card>
 
-      {/* <AddTransactionModal open={open} defaultDate={latestDate(items)} onClose={() => setOpen(false)} onAdd={add} /> */}
+      <AddTransactionModal open={open} defaultDate={latestDate(items)} onClose={() => setOpen(false)} onAdd={add} />
     </AppShell>
   );
 }

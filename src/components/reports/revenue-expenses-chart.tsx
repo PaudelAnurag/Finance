@@ -2,12 +2,18 @@
 
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+import { EmptyChart } from "@/components/shell/empty-chart";
 import { useMoney } from "@/lib/currency";
 import { useDataset } from "@/lib/dataset/context";
 
 export function RevenueExpensesChart({ height = 300 }: { height?: number }) {
   const { fmt, currency } = useMoney();
   const { reports } = useDataset();
+
+  if (reports.monthly.length === 0) {
+    return <EmptyChart message="No revenue or expense data yet — upload a CSV or connect an API." height={height} />;
+  }
+
   return (
     <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">

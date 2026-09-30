@@ -18,6 +18,11 @@ export function Topbar({ title, subtitle }: { title: string; subtitle: string })
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
+        <button className="hidden items-center gap-2 rounded-lg border bg-card px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted sm:flex">
+          <Calendar className="size-4" />
+          Apr 1, 2025 – Apr 30, 2025
+          <ChevronDown className="size-3.5" />
+        </button>
         <button className="relative flex size-9 items-center justify-center rounded-lg border bg-card hover:bg-muted" aria-label="Notifications">
           <Bell className="size-4 text-muted-foreground" />
           <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-risk-high text-[10px] font-medium text-white">3</span>
