@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 
 import { AppShell } from "@/components/shell/app-shell";
 import { KpiCard } from "@/components/shell/kpi-card";
-import { AddTransactionModal } from "@/components/transactions/add-transaction-modal";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +19,7 @@ import {
   transactionSortOptions,
 } from "@/data/mock-transactions";
 import { useMoney } from "@/lib/currency";
-import { useDataset, useDatasetActions } from "@/lib/dataset/context";
+import { useAllTransactions, useDataset, useDatasetActions } from "@/lib/dataset/context";
 import {
   filterTransactions,
   formatShortDate,
@@ -32,7 +32,8 @@ import { cn } from "@/lib/utils";
 
 export default function TransactionsPage() {
   const { fmt, signed } = useMoney();
-  const { transactions: items } = useDataset();
+  const { transactions: items, period, totalTransactions } = useDataset();
+  const allItems = useAllTransactions();
   const { addTransaction } = useDatasetActions();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<TransactionFilter>("All");
@@ -72,6 +73,13 @@ export default function TransactionsPage() {
         />
       </section>
 
+      {period && totalTransactions > items.length && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Showing {period.label}. {totalTransactions - items.length} other transaction
+          {totalTransactions - items.length === 1 ? " is" : "s are"} outside this period — change the period from the date selector to see them.
+        </p>
+      )}
+
       <Card className="mt-6">
         <CardContent className="space-y-4 pt-5">
           <SearchInput
@@ -98,7 +106,7 @@ export default function TransactionsPage() {
         </CardContent>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-160 text-sm">
             <thead>
               <tr className="border-t text-left text-xs text-muted-foreground">
                 <th className="px-5 py-2.5 font-medium">Date</th>
@@ -143,7 +151,6 @@ export default function TransactionsPage() {
         </div>
       </Card>
 
-      <AddTransactionModal open={open} defaultDate={latestDate(items)} onClose={() => setOpen(false)} onAdd={add} />
     </AppShell>
   );
 }

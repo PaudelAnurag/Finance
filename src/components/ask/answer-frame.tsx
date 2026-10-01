@@ -1,6 +1,7 @@
 import { Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import { useDataset } from "@/lib/dataset/context";
 
 export function UserBubble({ text, time }: { text: string; time: string }) {
   return (
@@ -22,6 +23,7 @@ export function AnswerFrame({
   source: string;
   children: React.ReactNode;
 }) {
+  const { period } = useDataset();
   return (
     <div className="flex items-start gap-3">
       <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-white">
@@ -30,7 +32,7 @@ export function AnswerFrame({
       <div className="min-w-0 flex-1 space-y-3">
         <Card className="p-5">{children}</Card>
         <div className="flex items-center justify-between px-1">
-          <p className="text-[11px] text-muted-foreground">Sources: {source}</p>
+          <p className="text-[11px] text-muted-foreground">Sources: {source}{period ? ` · Period: ${period.label}` : ""}</p>
           <div className="flex items-center gap-3">
             <button aria-label="Helpful" className="text-muted-foreground hover:text-foreground">
               <ThumbsUp className="size-3.5" />

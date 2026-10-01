@@ -5,6 +5,7 @@ import "./globals.css";
 
 import { CurrencyProvider } from "@/lib/currency";
 import { ApiSettingsProvider } from "@/lib/api-settings";
+import { FinancialDateRangeProvider } from "@/lib/date-range/context";
 import { DatasetProvider } from "@/lib/dataset/context";
 import { HydrationGate } from "@/lib/hydration";
 import { SettingsProvider } from "@/lib/settings";
@@ -18,15 +19,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="min-h-screen">
-        <CurrencyProvider>
-          <SettingsProvider>
+        <SettingsProvider>
+          <CurrencyProvider>
             <ApiSettingsProvider>
-              <DatasetProvider>
-                <HydrationGate>{children}</HydrationGate>
-              </DatasetProvider>
+              <FinancialDateRangeProvider>
+                <DatasetProvider>
+                  <HydrationGate>{children}</HydrationGate>
+                </DatasetProvider>
+              </FinancialDateRangeProvider>
             </ApiSettingsProvider>
-          </SettingsProvider>
-        </CurrencyProvider>
+          </CurrencyProvider>
+        </SettingsProvider>
       </body>
     </html>
   );

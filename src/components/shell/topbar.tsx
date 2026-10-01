@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, Calendar, ChevronDown } from "lucide-react";
+import { Bell, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { DateRangePicker } from "@/components/shell/date-range-picker";
 import { currencyOptions, useCurrency } from "@/lib/currency";
 
 export function Topbar({
@@ -24,11 +25,7 @@ export function Topbar({
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        <button className="hidden items-center gap-2 rounded-lg border bg-card px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted sm:flex">
-          <Calendar className="size-4" />
-          FY 2026/27
-          <ChevronDown className="size-3.5" />
-        </button>
+        <DateRangePicker />
         <button
           className="relative flex size-9 items-center justify-center rounded-lg border bg-card hover:bg-muted"
           aria-label="Notifications"

@@ -16,6 +16,7 @@ import { QuickInsights } from "@/components/ask/quick-insights";
 import { AppShell } from "@/components/shell/app-shell";
 import { AskFinanceKind, askQuestions, findAskFinanceQA } from "@/data/ask-finance-qa";
 import { useDataset } from "@/lib/dataset/context";
+import { formatSpan } from "@/lib/date-range/dates";
 
 const answerByKind: Record<AskFinanceKind, React.ComponentType> = {
   revenue: RevenueAnswer,
@@ -35,7 +36,7 @@ interface ThreadItem {
 const now = () => new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
 export default function AskFinancePage() {
-  const { source } = useDataset();
+  const { source, period } = useDataset();
   // Newest first: the answer always appears right under the pinned question box.
   const [thread, setThread] = useState<ThreadItem[]>([
     { id: "seed", question: askQuestions.revenue, kind: "revenue", time: "10:24 AM" },
@@ -74,6 +75,11 @@ export default function AskFinancePage() {
             className="sticky top-0 z-20 -mx-6 bg-background/95 px-6 pb-3 pt-1 backdrop-blur md:-mx-10 md:px-10"
           >
             <ChatComposer onAsk={ask} />
+            {period && (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Answering for the selected reporting period: <span className="font-medium">{period.label}</span> ({formatSpan(period.startIso, period.endIso)})
+              </p>
+            )}
           </div>
 
           <div className="space-y-8 pt-3">

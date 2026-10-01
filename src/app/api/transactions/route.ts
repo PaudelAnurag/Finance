@@ -2010,7 +2010,11 @@ export async function OPTIONS() {
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Authorization, Content-Type",
+      // Settings lets users pick a custom auth header (default x-api-key), so allow it in the preflight.
+      "Access-Control-Allow-Headers": "Authorization, Content-Type, X-API-Key",
+      // Chrome asks permission before a public site calls a private IP (192.168.x.x, 10.x.x.x).
+      "Access-Control-Allow-Private-Network": "true",
+      "Access-Control-Max-Age": "600",
     },
   });
 }
