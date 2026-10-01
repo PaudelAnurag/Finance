@@ -270,16 +270,8 @@ export default function SettingsPage() {
               </option>
             ))}
           </Select>
-
-          <p className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
-            {countryLocked && <Lock className="mt-0.5 size-3 shrink-0" />}
-
-            {countryLocked
-              ? "Country and its default currency are locked."
-              : "Select your country. Currency and fiscal year will be determined automatically."}
-          </p>
         </Row>
-        
+
         {/* AUTOMATIC CURRENCY - ALWAYS LOCKED */}
         <Row label="Currency">
           <div className="flex items-center gap-2">
@@ -295,11 +287,8 @@ export default function SettingsPage() {
                 </option>
               ))}
             </Select>
-
-            <Lock className="size-4 shrink-0 text-muted-foreground" />
           </div>
         </Row>
-
 
         {/* FISCAL YEAR */}
         <Row label="Fiscal Year">
@@ -471,7 +460,7 @@ export default function SettingsPage() {
             <dt className="text-muted-foreground">Fiscal year</dt>
             <dd className="text-right font-medium">
               {fyEdit
-                ? `${formatLong(fyEdit.start)} – ${formatLong(fyEdit.end)}`
+                ? `${formatLong(fyEdit.start)} - ${formatLong(fyEdit.end)}`
                 : ""}
             </dd>
           </div>
@@ -598,7 +587,7 @@ export default function SettingsPage() {
       </Section>
 
       {/* AI SETTINGS */}
-      <Section title="AI Settings">
+      {/* <Section title="AI Settings">
         <Row label="Forecast Period" htmlFor="forecast">
           <Select
             id="forecast"
@@ -622,7 +611,7 @@ export default function SettingsPage() {
             ))}
           </Select>
         </Row>
-      </Section>
+      </Section> */}
 
       {/* NOTIFICATIONS */}
       <Section title="Notifications">
@@ -650,7 +639,7 @@ export default function SettingsPage() {
       </Section>
 
       {/* SECURITY */}
-      <Section title="Security">
+      {/* <Section title="Security">
         {securityItems.map((s) => (
           <div
             key={s.label}
@@ -671,7 +660,7 @@ export default function SettingsPage() {
             Change password
           </Link>
         </div>
-      </Section>
+      </Section> */}
 
       {/* SAVE SETTINGS */}
       <div className="mt-6 flex items-center justify-end gap-3">
