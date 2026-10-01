@@ -1,8 +1,11 @@
 // PHASE 1 MOCK DATA — transactions. Raw numbers/ISO dates only; formatting
 // happens in components via lib/format + lib/transactions.
 
-export type TransactionType = "Income" | "Expense";
-export type TransactionStatus = "Completed" | "Pending";
+import type { TxStatus, TxType } from "@/lib/records/validate";
+
+// One vocabulary for the whole app: defined in lib/records/validate.ts, aliased here for the UI.
+export type TransactionType = TxType;
+export type TransactionStatus = TxStatus;
 
 export interface Transaction {
   id: string;
@@ -13,19 +16,6 @@ export interface Transaction {
   status: TransactionStatus;
   amount: number; // always positive; sign comes from `type`
 }
-
-export const transactionTypes: TransactionType[] = ["Income", "Expense"];
-export const transactionStatuses: TransactionStatus[] = ["Completed", "Pending"];
-export const transactionCategories = [
-  "Sales",
-  "Services",
-  "Operations",
-  "Software",
-  "Utilities",
-  "Payroll",
-  "Marketing",
-  "Logistics",
-];
 
 export const transactionFilters = ["All", "Income", "Expense", "Pending", "Completed"] as const;
 export type TransactionFilter = (typeof transactionFilters)[number];

@@ -1,16 +1,9 @@
+import { fromMinor, toMinor } from "@/lib/money";
 import type {
   Transaction,
   TransactionFilter,
   TransactionSort,
 } from "@/data/mock-transactions";
-
-export function formatShortDate(iso: string) {
-  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 export function filterTransactions(list: Transaction[], filter: TransactionFilter, query: string) {
   const q = query.trim().toLowerCase();
@@ -35,27 +28,13 @@ export function sortTransactions(list: Transaction[], sort: TransactionSort) {
   }
 }
 
-// Sums in integer minor units so decimals never drift (0.1 + 0.2 === 0.3).
-export const toMinor = (amount: number) => Math.round(amount * 100);
-
-export function summarize(list: Transaction[]) {
+/** Income / expense / net of a transaction list, in major units. Summed in minor units so decimals never drift. */
+export function incomeExpenseTotals(list: Transaction[]) {
   const income = list.filter((t) => t.type === "Income").reduce((s, t) => s + toMinor(t.amount), 0);
   const expenses = list.filter((t) => t.type === "Expense").reduce((s, t) => s + toMinor(t.amount), 0);
-  return { income: income / 100, expenses: expenses / 100, net: (income - expenses) / 100 };
-}
-
-export function latestDate(list: Transaction[]) {
-  return list.reduce((max, t) => (t.date > max ? t.date : max), list[0]?.date ?? "");
+  return { income: fromMinor(income), expenses: fromMinor(expenses), net: fromMinor(income - expenses) };
 }
 
 export function signedAmount(t: Transaction) {
   return t.type === "Income" ? t.amount : -t.amount;
-}
-
-export function formatMonth(yearMonth: string) {
-  return new Date(`${yearMonth}-01T00:00:00Z`).toLocaleDateString("en-US", {
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  });
 }

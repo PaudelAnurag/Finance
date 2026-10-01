@@ -1,3 +1,5 @@
+import { round2 } from "@/lib/money";
+
 // Deterministic formatting helpers. No AI, no hardcoded display strings in
 // components — components pass raw numbers + the active currency code,
 // this layer turns them into text. Phase 1: tag/prefix only, no FX conversion.
@@ -42,8 +44,6 @@ export function formatSignedMoney(
   const sign = value < 0 ? "-" : showPlus && value > 0 ? "+" : "";
   return `${sign}${formatMoney(Math.abs(value), currency, { compact })}`;
 }
-
-export const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Text can carry money as `{m:1234.5}`; it is rendered with the active currency at display time. */
 export const moneyToken = (n: number) => `{m:${round2(n)}}`;

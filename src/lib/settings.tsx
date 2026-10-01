@@ -1,10 +1,10 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useMemo } from "react";
 
 import { aiDefaults, businessDefaults, notificationOptions } from "@/data/mock-settings";
 import { isValidIso } from "@/lib/date-range/dates";
-import { createPersistentStore } from "@/lib/persistent-store";
+import { createRequiredContext, createStoredValue } from "@/lib/stored-context";
 
 export interface AppSettings {
   companyName: string;
@@ -33,7 +33,7 @@ export interface AppSettings {
   // here; that's exactly the duplicate-auth-implementation bug this avoids.
 }
 
-export const DEFAULT_COUNTRY = "US";
+const DEFAULT_COUNTRY = "US";
 
 export const defaultSettings: AppSettings = {
   ...businessDefaults,
@@ -44,8 +44,6 @@ export const defaultSettings: AppSettings = {
   fiscalYearCustom: null,
   notifications: Object.fromEntries(notificationOptions.map((n) => [n.id, n.enabled])),
 };
-
-const store = createPersistentStore("local", "finance-os:settings:v1");
 
 function parseFiscalCustom(v: unknown): AppSettings["fiscalYearCustom"] {
   if (!v || typeof v !== "object") return null;
@@ -91,11 +89,13 @@ export function applyLocks(current: AppSettings, next: AppSettings): AppSettings
   return merged;
 }
 
-const Ctx = createContext<{ settings: AppSettings; save: (next: AppSettings) => boolean } | null>(null);
+const { store, useStoredValue } = createStoredValue({ kind: "local", key: "finance-os:settings:v1", parse: parseSettings });
+const { Provider, useRequired } = createRequiredContext<{ settings: AppSettings; save: (next: AppSettings) => boolean }>(
+  "useSettings must be used within SettingsProvider",
+);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const raw = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
-  const settings = useMemo(() => parseSettings(raw), [raw]);
+  const settings = useStoredValue();
   // The one-time rules are enforced here, not just in the UI: once country / fiscal year are locked,
   // no caller (stale form, another tab, future code) can change them.
   const save = useCallback(
@@ -103,11 +103,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [],
   );
   const value = useMemo(() => ({ settings, save }), [settings, save]);
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return <Provider value={value}>{children}</Provider>;
 }
 
-export function useSettings() {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useSettings must be used within SettingsProvider");
-  return ctx;
-}
+export const useSettings = useRequired;

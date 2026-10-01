@@ -2,9 +2,7 @@
 // All money is handled as integer MINOR units (x100) so totals never drift.
 import { csvSpec } from "@/data/mock-upload";
 import { parseCsv } from "@/lib/csv/parse";
-
-export type TxType = "Income" | "Expense";
-export type TxStatus = "Completed" | "Pending";
+import { validateRecord, type TxStatus, type TxType } from "@/lib/records/validate";
 
 export interface ParsedTransaction {
   row: number; // line in the file
@@ -75,7 +73,7 @@ export interface CsvAnalysis {
 
 const REQUIRED = csvSpec.requiredColumns.map((c) => c.name);
 
-export function emptySummary(): Summary {
+function emptySummary(): Summary {
   return {
     incomeMinor: 0,
     expenseMinor: 0,
@@ -87,24 +85,6 @@ export function emptySummary(): Summary {
     categories: [],
     monthly: [],
   };
-}
-
-function isRealDate(y: number, m: number, d: number) {
-  if (y < 1900 || y > 2100 || m < 1 || m > 12 || d < 1) return false;
-  return d <= new Date(Date.UTC(y, m, 0)).getUTCDate();
-}
-
-function parseAmount(raw: string): { minor: number } | { error: string } {
-  const s = raw.trim();
-  if (!s) return { error: "Missing amount" };
-  if (s.startsWith("-")) return { error: `Amount must be positive: "${s}" (use the type column for direction)` };
-  if (!/^(\d{1,3}(,\d{3})+|\d+)(\.\d+)?$/.test(s)) return { error: `Invalid amount: "${s}"` };
-  const [intPart, frac = ""] = s.replace(/,/g, "").split(".");
-  if (frac.length > 2) return { error: `Invalid amount: "${s}" (maximum 2 decimal places)` };
-  const minor = Number(intPart) * 100 + Number((frac + "00").slice(0, 2));
-  if (minor <= 0) return { error: `Amount must be greater than 0: "${s}"` };
-  if (!Number.isSafeInteger(minor)) return { error: `Amount is too large: "${s}"` };
-  return { minor };
 }
 
 export function summarize(transactions: ParsedTransaction[]): Summary {
@@ -250,45 +230,17 @@ export function analyzeCsv(text: string, meta: { fileName: string; fileSizeBytes
       continue;
     }
 
-    const get = (c: (typeof REQUIRED)[number]) => cells[idx[c]].trim();
-    const errors: string[] = [];
-
-    const date = get("date");
-    const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-    if (!date) errors.push("Missing date");
-    else if (!dm || !isRealDate(+dm[1], +dm[2], +dm[3])) errors.push(`Invalid date: "${date}" (use YYYY-MM-DD)`);
-
-    const description = get("description");
-    if (!description) errors.push("Missing description");
-
-    const category = get("category");
-    if (!category) errors.push("Missing category");
-
-    const rawType = get("type");
-    let type: TxType | null = null;
-    if (!rawType) errors.push("Missing type");
-    else if (rawType.toLowerCase() === "income") type = "Income";
-    else if (rawType.toLowerCase() === "expense") type = "Expense";
-    else errors.push(`Invalid type: "${rawType}" (expected Income or Expense)`);
-
-    const amount = parseAmount(get("amount"));
-    if ("error" in amount) errors.push(amount.error);
-
-    const rawStatus = get("status");
-    let status: TxStatus | null = null;
-    if (!rawStatus) errors.push("Missing status");
-    else if (rawStatus.toLowerCase() === "completed") status = "Completed";
-    else if (rawStatus.toLowerCase() === "pending") status = "Pending";
-    else errors.push(`Invalid status: "${rawStatus}" (expected Completed or Pending)`);
-
-    if (errors.length || !type || !status || "error" in amount) {
+    // Same validators as the API import and the "Add transaction" form.
+    const outcome = validateRecord((f) => cells[idx[f]], { incomeWord: "Income", expenseWord: "Expense" });
+    if ("errors" in outcome) {
       result.invalidRows++;
-      for (const message of errors) result.issues.push({ row, severity: "error", message });
+      for (const message of outcome.errors) result.issues.push({ row, severity: "error", message });
       continue;
     }
 
-    const tx: ParsedTransaction = { row, date, description, category, type, status, amountMinor: amount.minor };
-    const key = [date, description.toLowerCase(), category.toLowerCase(), type, amount.minor].join("|");
+    const r = outcome.record;
+    const tx: ParsedTransaction = { row, ...r };
+    const key = [r.date, r.description.toLowerCase(), r.category.toLowerCase(), r.type, r.amountMinor].join("|");
     const first = seen.get(key);
     if (first !== undefined) {
       tx.duplicateOf = first;

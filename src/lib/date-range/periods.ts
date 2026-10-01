@@ -27,7 +27,7 @@ const monthBounds = (year: number, month1: number) => ({
 });
 
 /** Fiscal quarter (3-month block counted from the fiscal-year start) that contains `today`. */
-export function fiscalQuarter(fy: FiscalYear, today: IsoDate): { index: number; start: IsoDate; end: IsoDate } {
+function fiscalQuarter(fy: FiscalYear, today: IsoDate): { index: number; start: IsoDate; end: IsoDate } {
   let found = 0;
   for (let i = 0; i < 4; i++) if (quarterStart(fy, i) <= today) found = i;
   const start = quarterStart(fy, found);

@@ -4,8 +4,9 @@ import type { Transaction } from "@/data/mock-transactions";
 import { askQuestions } from "@/data/ask-finance-qa";
 import { latestActual, netChange, worstMonthDrop } from "@/lib/cash-flow";
 import type { AskData, AttentionItem, CashPoint, Dataset, DatasetPeriod, QuickInsight, SnapshotMetric, Tone } from "@/lib/dataset/types";
-import { moneyToken, round2 } from "@/lib/format";
-import { formatMonth, formatShortDate, toMinor } from "@/lib/transactions";
+import { formatShortDate, formatYearMonth, addMonthsToYearMonth } from "@/lib/date-range/dates";
+import { moneyToken } from "@/lib/format";
+import { fromMinor, pctChange, toMinor } from "@/lib/money";
 
 const TONES: Tone[] = ["blue", "purple", "green", "orange", "teal"];
 const FORECAST_MONTHS = 3;
@@ -17,20 +18,12 @@ interface Bucket {
   expenseCats: Map<string, { label: string; total: number }>;
 }
 
-const pctChange = (prev: number, cur: number) => (prev === 0 ? null : ((cur - prev) / Math.abs(prev)) * 100);
-const major = (minor: number) => round2(minor / 100);
 
 function addTo(map: Bucket["incomeCats"], category: string, minor: number) {
   const key = category.toLowerCase();
   const cur = map.get(key) ?? { label: category, total: 0 };
   cur.total += minor;
   map.set(key, cur);
-}
-
-function nextMonth(ym: string, k: number) {
-  const [y, m] = ym.split("-").map(Number);
-  const d = new Date(Date.UTC(y, m - 1 + k, 1));
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 const sortedCats = (map: Bucket["incomeCats"]) => [...map.values()].sort((a, b) => b.total - a.total);
@@ -96,7 +89,7 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
     const b = buckets.get(ym)!;
     running += b.income - b.expense;
     cumulative.push(running);
-    return { month: formatMonth(ym), actual: major(running) };
+    return { month: formatYearMonth(ym), actual: fromMinor(running) };
   });
   const window = Math.min(3, months.length);
   const avgNetMinor =
@@ -105,7 +98,7 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
   if (months.length && includeForecast) {
     cashSeries[cashSeries.length - 1].forecast = cashSeries[cashSeries.length - 1].actual;
     for (let k = 1; k <= FORECAST_MONTHS; k++) {
-      cashSeries.push({ month: formatMonth(nextMonth(months[months.length - 1], k)), forecast: major(running + avgNetMinor * k) });
+      cashSeries.push({ month: formatYearMonth(addMonthsToYearMonth(months[months.length - 1], k)), forecast: fromMinor(running + avgNetMinor * k) });
     }
   }
 
@@ -123,8 +116,8 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
       : { key: "runway", label: "Runway", kind: "months", value: Math.max(running, 0) / -avgMonthlyNet, delta: null };
 
   const snapshot: SnapshotMetric[] = [
-    { key: "revenue", label: "Revenue", kind: "money", value: major(incomeMinor), delta: revenuePct === null ? null : { type: "pct", value: revenuePct } },
-    { key: "cash", label: "Net cash", kind: "money", value: major(running), delta: cashPct === null ? null : { type: "pct", value: cashPct } },
+    { key: "revenue", label: "Revenue", kind: "money", value: fromMinor(incomeMinor), delta: revenuePct === null ? null : { type: "pct", value: revenuePct } },
+    { key: "cash", label: "Net cash", kind: "money", value: fromMinor(running), delta: cashPct === null ? null : { type: "pct", value: cashPct } },
     {
       key: "margin",
       label: "Net margin",
@@ -133,8 +126,8 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
       delta: lastMargin !== null && prevMargin !== null ? { type: "pts", value: lastMargin - prevMargin } : null,
     },
     runway,
-    { key: "receivables", label: "Pending income", kind: "money", value: major(pendingIncome), delta: null },
-    { key: "payables", label: "Pending expenses", kind: "money", value: major(pendingExpense), delta: null },
+    { key: "receivables", label: "Pending income", kind: "money", value: fromMinor(pendingIncome), delta: null },
+    { key: "payables", label: "Pending expenses", kind: "money", value: fromMinor(pendingExpense), delta: null },
   ];
 
   // ---- attention (deterministic rules) ----
@@ -161,8 +154,8 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
     attention.push({
       id: "negative-month",
       severity: "medium",
-      text: `Net cash flow negative in ${formatMonth(months[months.length - 1])}`,
-      detail: `${moneyToken(major(last.income - last.expense))} for the month`,
+      text: `Net cash flow negative in ${formatYearMonth(months[months.length - 1])}`,
+      detail: `${moneyToken(fromMinor(last.income - last.expense))} for the month`,
     });
   }
   if (avgNetMinor < 0) {
@@ -170,14 +163,14 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
       id: "cash-forecast",
       severity: "medium",
       text: "Cash forecast is declining",
-      detail: `Average monthly net: ${moneyToken(major(avgNetMinor))}`,
+      detail: `Average monthly net: ${moneyToken(fromMinor(avgNetMinor))}`,
     });
   }
   if (pendingIncome > 0) {
     attention.push({
       id: "pending-receivables",
       severity: "medium",
-      text: `${moneyToken(major(pendingIncome))} pending income`,
+      text: `${moneyToken(fromMinor(pendingIncome))} pending income`,
       detail: `${pendingIncomeCount} income transaction${pendingIncomeCount === 1 ? "" : "s"} still pending`,
     });
   }
@@ -185,7 +178,7 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
     attention.push({
       id: "pending-payables",
       severity: "low",
-      text: `${moneyToken(major(pendingExpense))} pending expenses`,
+      text: `${moneyToken(fromMinor(pendingExpense))} pending expenses`,
       detail: `${pendingExpenseCount} expense transaction${pendingExpenseCount === 1 ? "" : "s"} still pending`,
     });
   }
@@ -201,7 +194,7 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
   // ---- quick insights ----
   const expensePct = prev && last ? pctChange(prev.expense, last.expense) : null;
   const trendInsight = (label: string, pct: number | null, total: number, upGood: boolean, question: string): QuickInsight => {
-    if (pct === null) return { tone: "blue", title: label, detail: `${moneyToken(major(total))} in the latest month`, question };
+    if (pct === null) return { tone: "blue", title: label, detail: `${moneyToken(fromMinor(total))} in the latest month`, question };
     const up = pct >= 0;
     return {
       tone: up === upGood ? "green" : "red",
@@ -216,14 +209,14 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
     {
       tone: running >= 0 ? "blue" : "red",
       title: running >= 0 ? "Net cash is positive" : "Net cash is negative",
-      detail: `${moneyToken(major(running))} cumulative net cash flow`,
+      detail: `${moneyToken(fromMinor(running))} cumulative net cash flow`,
       question: askQuestions.cashflow,
     },
     pendingIncomeCount > 0
       ? {
           tone: "orange",
           title: `${pendingIncomeCount} pending income item${pendingIncomeCount === 1 ? "" : "s"}`,
-          detail: `${moneyToken(major(pendingIncome))} outstanding`,
+          detail: `${moneyToken(fromMinor(pendingIncome))} outstanding`,
           question: askQuestions.overdue,
         }
       : { tone: "green", title: "No pending income", detail: "Nothing outstanding in your data", question: askQuestions.overdue },
@@ -238,23 +231,23 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
   // ---- reports inputs ----
   const reports: Dataset["reports"] = {
     monthly: months.map((ym) => ({
-      month: formatMonth(ym),
-      revenue: major(buckets.get(ym)!.income),
-      expenses: major(buckets.get(ym)!.expense),
+      month: formatYearMonth(ym),
+      revenue: fromMinor(buckets.get(ym)!.income),
+      expenses: fromMinor(buckets.get(ym)!.expense),
     })),
-    revenueLines: sortedCats(incomeAll).map((c) => ({ label: c.label, amount: major(c.total) })),
-    expenseLines: sortedCats(expenseAll).map((c) => ({ label: c.label, amount: major(c.total), group: "opex" as const })),
+    revenueLines: sortedCats(incomeAll).map((c) => ({ label: c.label, amount: fromMinor(c.total) })),
+    expenseLines: sortedCats(expenseAll).map((c) => ({ label: c.label, amount: fromMinor(c.total), group: "opex" as const })),
     cashFlow: [
       {
         section: "Operating activities",
         lines: [
-          { label: "Income (all rows)", amount: major(incomeMinor) },
-          { label: "Expenses (all rows)", amount: -major(expenseMinor) },
+          { label: "Income (all rows)", amount: fromMinor(incomeMinor) },
+          { label: "Expenses (all rows)", amount: -fromMinor(expenseMinor) },
         ],
       },
     ],
     openingCash: 0,
-    balanceSheet: { assets: [{ label: "Cash (cumulative net cash flow)", amount: major(running) }], liabilities: [] },
+    balanceSheet: { assets: [{ label: "Cash (cumulative net cash flow)", amount: fromMinor(running) }], liabilities: [] },
     note: outsidePeriod
       ? noneNote
       : `Built from your uploaded transactions${periodText}. Cost of goods sold isn't in a transactions CSV, so all expenses are shown as operating expenses; opening cash is assumed to be zero and the balance sheet shows cash only.`,
@@ -264,12 +257,12 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
   const latestCash = latestActual(cashSeries)?.actual ?? 0;
   const lastIncomeCats = last ? sortedCats(last.incomeCats) : [];
   const revenueAsk: AskData["revenue"] = {
-    periodLabel: months.length ? formatMonth(months[months.length - 1]) : "the latest month",
-    total: major(last?.income ?? 0),
-    previous: prev ? major(prev.income) : null,
+    periodLabel: months.length ? formatYearMonth(months[months.length - 1]) : "the latest month",
+    total: fromMinor(last?.income ?? 0),
+    previous: prev ? fromMinor(prev.income) : null,
     deltaPct: revenuePct,
-    trend: months.map((ym) => ({ month: formatMonth(ym), value: major(buckets.get(ym)!.income) })),
-    bySource: lastIncomeCats.map((c, i) => ({ label: c.label, value: major(c.total), tone: TONES[i % TONES.length] })),
+    trend: months.map((ym) => ({ month: formatYearMonth(ym), value: fromMinor(buckets.get(ym)!.income) })),
+    bySource: lastIncomeCats.map((c, i) => ({ label: c.label, value: fromMinor(c.total), tone: TONES[i % TONES.length] })),
   };
   const pendingItems = transactions
     .filter((t) => t.type === "Income" && t.status === "Pending")
@@ -279,8 +272,8 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
   const expenseItems = last
     ? sortedCats(last.expenseCats).map((c) => ({
         category: c.label,
-        amount: major(c.total),
-        deltaFromPrior: prev ? major(c.total - (prev.expenseCats.get(c.label.toLowerCase())?.total ?? 0)) : 0,
+        amount: fromMinor(c.total),
+        deltaFromPrior: prev ? fromMinor(c.total - (prev.expenseCats.get(c.label.toLowerCase())?.total ?? 0)) : 0,
       }))
     : [];
 
@@ -311,9 +304,9 @@ export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta):
         change: netChange(cashSeries),
         deltaPct: cashPct,
         worstMonth: worstMonthDrop(cashSeries),
-        receivables: major(pendingIncome),
+        receivables: fromMinor(pendingIncome),
       },
-      pending: { mode: "pending", total: major(pendingIncome), items: pendingItems },
+      pending: { mode: "pending", total: fromMinor(pendingIncome), items: pendingItems },
       expenses: { periodLabel: revenueAsk.periodLabel, hasPrior: months.length > 1, items: expenseItems },
     },
   };

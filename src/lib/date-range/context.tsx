@@ -11,7 +11,7 @@
 //   FinancialDateRange  ──►  DatasetProvider filters transactions once ──► every page
 //
 // Nothing else in the app keeps its own date range. Pages just read the dataset.
-import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 
 import { useCurrency } from "@/lib/currency";
 import {
@@ -29,8 +29,8 @@ import {
   type FiscalYear,
 } from "@/lib/date-range/fiscal-year";
 import { presetOptions, resolvePeriod, type PresetId } from "@/lib/date-range/periods";
-import { createPersistentStore } from "@/lib/persistent-store";
 import { useSettings } from "@/lib/settings";
+import { createRequiredContext, createStoredValue } from "@/lib/stored-context";
 
 export interface FinancialDateRange {
   startDate: Date;
@@ -51,9 +51,6 @@ interface Selection {
 const DEFAULT_SELECTION: Selection = { preset: "this-fiscal-year" };
 const PRESETS = new Set<string>(presetOptions.map((p) => p.id));
 
-// The chosen period survives navigation and refresh in this tab (like the uploaded data does).
-const store = createPersistentStore("session", "finance-os:date-range:v1");
-
 function parseSelection(raw: string | null): Selection {
   if (!raw) return DEFAULT_SELECTION;
   try {
@@ -69,6 +66,9 @@ function parseSelection(raw: string | null): Selection {
     return DEFAULT_SELECTION;
   }
 }
+
+// The chosen period survives navigation and refresh in this tab (like the uploaded data does).
+const { store, useStoredValue } = createStoredValue({ kind: "session", key: "finance-os:date-range:v1", parse: parseSelection });
 
 // "Today" as a stable string so useSyncExternalStore doesn't re-render endlessly. During hydration
 // React uses the server value, then swaps to the client's local date without a mismatch error.
@@ -101,14 +101,15 @@ interface Api {
   applyCustomRange: (start: string, end: string) => string | null;
 }
 
-const Ctx = createContext<Api | null>(null);
+const { Provider, useRequired: useApi } = createRequiredContext<Api>(
+  "Date-range hooks must be used within FinancialDateRangeProvider",
+);
 
 export function FinancialDateRangeProvider({ children }: { children: React.ReactNode }) {
   const { currency } = useCurrency();
   const { settings } = useSettings();
   const today = useSyncExternalStore(subscribeToday, getToday, getToday);
-  const raw = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
-  const selection = useMemo(() => parseSelection(raw), [raw]);
+  const selection = useStoredValue();
 
   // ---- fiscal year configuration ----
   const custom = settings.fiscalYearCustom;
@@ -164,18 +165,11 @@ export function FinancialDateRangeProvider({ children }: { children: React.React
     () => ({ range, fiscalYear, today, choices, selectPreset, applyCustomRange }),
     [range, fiscalYear, today, choices, selectPreset, applyCustomRange],
   );
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
-}
-
-function useApi() {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("Date-range hooks must be used within FinancialDateRangeProvider");
-  return ctx;
+  return <Provider value={value}>{children}</Provider>;
 }
 
 /** The global reporting period. Read-only for pages; change it through `useDateRangeControls`. */
 export const useFinancialDateRange = () => useApi().range;
-export const useFiscalYear = () => useApi().fiscalYear;
 export const useToday = () => useApi().today;
 export function useDateRangeControls() {
   const { choices, selectPreset, applyCustomRange, range } = useApi();

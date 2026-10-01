@@ -5,7 +5,7 @@ import { sampleCsvRows, sampleCsvWithErrors } from "../src/data/mock-upload";
 import { transactions } from "../src/data/mock-transactions";
 import { analyzeCsv, buildCsv } from "../src/lib/csv/analyze";
 import { parseCsv } from "../src/lib/csv/parse";
-import { summarize } from "../src/lib/transactions";
+import { incomeExpenseTotals } from "../src/lib/transactions";
 
 const meta = { fileName: "t.csv", fileSizeBytes: 1 };
 const H = "date,description,category,type,amount,status";
@@ -96,7 +96,7 @@ ok("header matching is case/space tolerant and extra columns only warn", () => {
 
 ok("round trip: sample CSV totals == Transactions page mock totals", () => {
   const a = analyzeCsv(buildCsv(sampleCsvRows), meta);
-  const t = summarize(transactions);
+  const t = incomeExpenseTotals(transactions);
   assert.equal(a.invalidRows, 0);
   assert.equal(a.summary.incomeMinor, t.income * 100);
   assert.equal(a.summary.expenseMinor, t.expenses * 100);

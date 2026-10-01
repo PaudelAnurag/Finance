@@ -9,7 +9,7 @@ import { latestActual, netChange, projectedRunoutMonth } from "../src/lib/cash-f
 import { buildCsvDataset, buildEmptyDataset } from "../src/lib/dataset/from-transactions";
 import { transactions as sampleTx } from "../src/data/mock-transactions";
 import { renderMoneyTokens } from "../src/lib/format";
-import { summarize } from "../src/lib/transactions";
+import { incomeExpenseTotals } from "../src/lib/transactions";
 
 const H = "date,description,category,type,amount,status";
 const csv = [
@@ -133,7 +133,7 @@ ok("runway: text when not burning, months when burning", () => {
 
 ok("sample CSV dataset totals match the Transactions page mock", () => {
   const { ds: s } = toDataset(buildCsv(sampleCsvRows));
-  const t = summarize(sampleTx);
+  const t = incomeExpenseTotals(sampleTx);
   assert.equal(s.snapshot.find((m: { key: string }) => m.key === "revenue")!.value, t.income);
   assert.equal(s.transactions.length, sampleTx.length);
 });

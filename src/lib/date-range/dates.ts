@@ -6,7 +6,7 @@ export type IsoDate = string;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export const daysInMonth = (year: number, month1: number) => new Date(Date.UTC(year, month1, 0)).getUTCDate();
+const daysInMonth = (year: number, month1: number) => new Date(Date.UTC(year, month1, 0)).getUTCDate();
 
 /** Builds yyyy-mm-dd, clamping the day (Feb 30 → Feb 28/29). */
 export function isoFromParts(year: number, month1: number, day: number): IsoDate {
@@ -59,6 +59,12 @@ export const formatLong = (iso: IsoDate) => fmt(iso, { month: "long", day: "nume
 /** "July 16" */
 export const formatMonthDay = (iso: IsoDate) => fmt(iso, { month: "long", day: "numeric" });
 /** "Jan 1, 2026" */
-export const formatShort = (iso: IsoDate) => fmt(iso, { month: "short", day: "numeric", year: "numeric" });
+const formatShort = (iso: IsoDate) => fmt(iso, { month: "short", day: "numeric", year: "numeric" });
 /** "Jan 1, 2026 – Mar 31, 2026" */
 export const formatSpan = (start: IsoDate, end: IsoDate) => `${formatShort(start)} – ${formatShort(end)}`;
+/** "Jan 5" */
+export const formatShortDate = (iso: IsoDate) => fmt(iso, { month: "short", day: "numeric" });
+/** "2026-01" → "Jan 2026" */
+export const formatYearMonth = (ym: string) => fmt(`${ym}-01`, { month: "short", year: "numeric" });
+/** "2026-01" + 3 → "2026-04" */
+export const addMonthsToYearMonth = (ym: string, months: number) => addMonths(`${ym}-01`, months).slice(0, 7);

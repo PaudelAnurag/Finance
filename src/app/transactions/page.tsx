@@ -1,13 +1,12 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, Plus, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { AppShell } from "@/components/shell/app-shell";
 import { KpiCard } from "@/components/shell/kpi-card";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/field";
 import { FilterChips } from "@/components/ui/filter-chips";
@@ -19,47 +18,33 @@ import {
   transactionSortOptions,
 } from "@/data/mock-transactions";
 import { useMoney } from "@/lib/currency";
-import { useAllTransactions, useDataset, useDatasetActions } from "@/lib/dataset/context";
+import { useDataset } from "@/lib/dataset/context";
+import { formatShortDate } from "@/lib/date-range/dates";
 import {
   filterTransactions,
-  formatShortDate,
-  latestDate,
+  incomeExpenseTotals,
   signedAmount,
   sortTransactions,
-  summarize,
 } from "@/lib/transactions";
 import { cn } from "@/lib/utils";
 
 export default function TransactionsPage() {
   const { fmt, signed } = useMoney();
   const { transactions: items, period, totalTransactions } = useDataset();
-  const allItems = useAllTransactions();
-  const { addTransaction } = useDatasetActions();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<TransactionFilter>("All");
   const [sort, setSort] = useState<TransactionSort>("date-desc");
-  const [open, setOpen] = useState(false);
 
-  const totals = useMemo(() => summarize(items), [items]);
+  const totals = useMemo(() => incomeExpenseTotals(items), [items]);
   const visible = useMemo(
     () => sortTransactions(filterTransactions(items, filter, query), sort),
     [items, filter, query, sort],
   );
 
-  function add(t: Parameters<typeof addTransaction>[0]) {
-    addTransaction(t);
-    setOpen(false);
-  }
-
   return (
     <AppShell
       title="Transactions"
-      subtitle="View and manage your financial activity"
-      action={
-        <Button variant="accent" onClick={() => setOpen(true)}>
-          <Plus /> Add Transaction
-        </Button>
-      }
+      subtitle="View your imported financial activity"
     >
       <section aria-label="Transaction summary" className="grid gap-4 sm:grid-cols-3">
         <KpiCard label="Total Income" value={fmt(totals.income, { compact: true })} icon={ArrowUpRight} tone="green" />
@@ -72,13 +57,6 @@ export default function TransactionsPage() {
           valueClassName={totals.net < 0 ? "text-negative" : "text-positive"}
         />
       </section>
-
-      {period && totalTransactions > items.length && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          Showing {period.label}. {totalTransactions - items.length} other transaction
-          {totalTransactions - items.length === 1 ? " is" : "s are"} outside this period — change the period from the date selector to see them.
-        </p>
-      )}
 
       <Card className="mt-6">
         <CardContent className="space-y-4 pt-5">
@@ -150,7 +128,6 @@ export default function TransactionsPage() {
           </table>
         </div>
       </Card>
-
     </AppShell>
   );
 }

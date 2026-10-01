@@ -1,14 +1,15 @@
 // Deterministic calculations over a cash series (from the active dataset).
 import type { CashPoint } from "@/lib/dataset/types";
+import { pctChange } from "@/lib/money";
 
 type Actual = CashPoint & { actual: number };
 type Forecast = CashPoint & { forecast: number };
 
-export function actualRows(series: CashPoint[]) {
+function actualRows(series: CashPoint[]) {
   return series.filter((r): r is Actual => r.actual != null);
 }
 
-export function forecastRows(series: CashPoint[]) {
+function forecastRows(series: CashPoint[]) {
   return series.filter((r): r is Forecast => r.forecast != null);
 }
 
@@ -36,7 +37,7 @@ export function monthOverMonthDeltas(series: CashPoint[]) {
     month: row.month,
     value: row.actual,
     change: row.actual - rows[i].actual,
-    changePct: rows[i].actual === 0 ? null : ((row.actual - rows[i].actual) / Math.abs(rows[i].actual)) * 100,
+    changePct: pctChange(rows[i].actual, row.actual),
   }));
 }
 

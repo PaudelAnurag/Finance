@@ -55,47 +55,27 @@ export function Topbar({
                 onClick={() => setOpen(false)}
               />
               <div className="absolute right-0 z-20 mt-2 w-64 rounded-lg border bg-card p-2 shadow-lg">
-                <p className="px-2 pb-1 pt-1 text-xs font-medium text-muted-foreground">
-                  Display currency
-                </p>
-                <select
-                  value={currency}
-                  onChange={(e) => {
-                    setCurrency(e.target.value);
-                    setOpen(false);
-                  }}
-                  className="w-full rounded-md border bg-card px-2 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  size={8}
+                <Link
+                  href="#"
+                  onClick={() => setOpen(false)}
+                  className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
                 >
-                  {currencyOptions.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.code} — {c.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="mt-2 border-t pt-2">
-                  <Link
-                    href="/settings"
-                    onClick={() => setOpen(false)}
-                    className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
-                  >
-                    Profile
-                  </Link>
-                  <Link
-                    href="/settings"
-                    onClick={() => setOpen(false)}
-                    className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
-                  >
-                    Settings
-                  </Link>
-                  <Link
-                    href="/login"
-                    onClick={() => setOpen(false)}
-                    className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
-                  >
-                    Sign out
-                  </Link>
-                </div>
+                  Profile
+                </Link>
+                <Link
+                  href="/settings"
+                  onClick={() => setOpen(false)}
+                  className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
+                >
+                  Settings
+                </Link>
+                <Link
+                  href="#"
+                  onClick={() => setOpen(false)}
+                  className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
+                >
+                  Sign out
+                </Link> 
               </div>
             </>
           )}

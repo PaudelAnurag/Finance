@@ -1,5 +1,5 @@
 // Deterministic report calculations over the active dataset's ReportInputs.
-import { round2 } from "@/lib/format";
+import { pctChange, round2 } from "@/lib/money";
 import type { ReportInputs } from "@/lib/dataset/types";
 
 export interface StatementRow {
@@ -17,15 +17,14 @@ export function periodTotals(r: ReportInputs) {
   return { revenue, expenses, netProfit, margin: revenue ? (netProfit / revenue) * 100 : 0 };
 }
 
-export function latestMonthChange(r: ReportInputs) {
+function latestMonthChange(r: ReportInputs) {
   if (r.monthly.length < 2) return null;
   const [prev, last] = r.monthly.slice(-2);
-  const pct = (a: number, b: number) => (a === 0 ? null : ((b - a) / a) * 100);
   return {
     month: last.month,
     prevMonth: prev.month,
-    revenuePct: pct(prev.revenue, last.revenue),
-    expensesPct: pct(prev.expenses, last.expenses),
+    revenuePct: pctChange(prev.revenue, last.revenue),
+    expensesPct: pctChange(prev.expenses, last.expenses),
   };
 }
 

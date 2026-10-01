@@ -16,6 +16,7 @@ import {
   projectedRunoutMonth,
 } from "@/lib/cash-flow";
 import { formatPct } from "@/lib/format";
+import { pctChange } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 export default function CashFlowPage() {
@@ -24,6 +25,7 @@ export default function CashFlowPage() {
   const latest = latestActual(cashSeries);
   const start = periodStart(cashSeries);
   const change = netChange(cashSeries);
+  const pct = start && latest ? pctChange(start.actual, latest.actual) : null;
   const runout = projectedRunoutMonth(cashSeries);
   const rows = monthOverMonthDeltas(cashSeries);
 
@@ -58,7 +60,7 @@ export default function CashFlowPage() {
             <p className={cn("text-2xl font-semibold tracking-tight tabular-nums", change < 0 ? "text-negative" : "text-positive")}>
               {fmt(change, { compact: true })}
             </p>
-            <p className="text-xs text-muted-foreground">{start.actual === 0 ? "n/a" : formatPct((change / Math.abs(start.actual)) * 100)} over period</p>
+            <p className="text-xs text-muted-foreground">{pct === null ? "n/a" : formatPct(pct)} over period</p>
           </CardContent>
         </Card>
 

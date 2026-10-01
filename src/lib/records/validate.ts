@@ -1,18 +1,18 @@
-// Field-level validators shared by every ingestion path (CSV today, API too).
+// Field-level validators shared by EVERY ingestion path: CSV upload, API import, "Add transaction" form.
 // Pure string in, typed value or error out — same rules everywhere data enters the app.
+// This file also owns the canonical transaction vocabulary types; import them from here.
+import { isValidIso } from "@/lib/date-range/dates";
+
 export type TxType = "Income" | "Expense";
 export type TxStatus = "Completed" | "Pending";
 
-function isRealDate(y: number, m: number, d: number) {
-  if (y < 1900 || y > 2100 || m < 1 || m > 12 || d < 1) return false;
-  return d <= new Date(Date.UTC(y, m, 0)).getUTCDate();
-}
+export const txTypes: readonly TxType[] = ["Income", "Expense"];
+export const txStatuses: readonly TxStatus[] = ["Completed", "Pending"];
 
 export function validateDate(raw: string): { value: string } | { error: string } {
   const date = raw.trim();
   if (!date) return { error: "Missing date" };
-  const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-  if (!dm || !isRealDate(+dm[1], +dm[2], +dm[3])) return { error: `Invalid date: "${date}" (use YYYY-MM-DD)` };
+  if (!isValidIso(date)) return { error: `Invalid date: "${date}" (use YYYY-MM-DD)` };
   return { value: date };
 }
 
@@ -21,6 +21,7 @@ export function validateAmount(raw: string): { minor: number } | { error: string
   if (!s) return { error: "Missing amount" };
   if (s.startsWith("-")) return { error: `Amount must be positive: "${s}" (use the type column for direction)` };
   if (!/^(\d{1,3}(,\d{3})+|\d+)(\.\d+)?$/.test(s)) return { error: `Invalid amount: "${s}"` };
+  // Parsed from the string (not Number * 100) so 1.15 can never become 114.99999.
   const [intPart, frac = ""] = s.replace(/,/g, "").split(".");
   if (frac.length > 2) return { error: `Invalid amount: "${s}" (maximum 2 decimal places)` };
   const minor = Number(intPart) * 100 + Number((frac + "00").slice(0, 2));

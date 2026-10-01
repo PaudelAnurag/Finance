@@ -1,18 +1,16 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useMemo } from "react";
 
-import { Transaction, TransactionStatus, TransactionType } from "@/data/mock-transactions";
+import type { Transaction } from "@/data/mock-transactions";
 import type { CsvAnalysis } from "@/lib/csv/analyze";
 import { buildCsvDataset, buildEmptyDataset } from "@/lib/dataset/from-transactions";
 import type { Dataset } from "@/lib/dataset/types";
 import { useFinancialDateRange, useToday } from "@/lib/date-range/context";
 import { filterByRange } from "@/lib/date-range/filter";
-import { createPersistentStore } from "@/lib/persistent-store";
-
-// Uploaded data is cached in this browser TAB only (sessionStorage): it survives
-// navigation and refresh, and disappears when the tab is closed. Never sent anywhere.
-const store = createPersistentStore("session", "finance-os:dataset:v1");
+import { fromMinor } from "@/lib/money";
+import { createRequiredContext, createStoredValue } from "@/lib/stored-context";
+import { txStatuses, txTypes } from "@/lib/records/validate";
 
 // Compact row: [id, date, description, category, type(0=Income,1=Expense), status(0=Completed,1=Pending), amount]
 type StoredRow = [string, string, string, string, 0 | 1, 0 | 1, number];
@@ -24,8 +22,8 @@ interface StoredCsv {
   rows: StoredRow[];
 }
 
-const TYPES: TransactionType[] = ["Income", "Expense"];
-const STATUSES: TransactionStatus[] = ["Completed", "Pending"];
+const TYPES = txTypes;
+const STATUSES = txStatuses;
 
 function parseStored(raw: string | null): StoredCsv | null {
   if (!raw) return null;
@@ -67,37 +65,37 @@ const fromRows = (rows: StoredRow[]): Transaction[] =>
 interface DatasetApi {
   /** Built from the transactions inside the selected reporting period only. */
   dataset: Dataset;
-  /** Every transaction held, regardless of the selected period. */
-  allTransactions: Transaction[];
   fileSizeBytes: number;
   /** Cache a validated CSV. Returns whether it could also be persisted for page refreshes. */
   applyCsv: (analysis: CsvAnalysis) => { persisted: boolean };
   clearCsv: () => void;
-  addTransaction: (t: Omit<Transaction, "id">) => void;
 }
 
-const Ctx = createContext<DatasetApi | null>(null);
+// Uploaded data is cached in this browser TAB only (sessionStorage): it survives
+// navigation and refresh, and disappears when the tab is closed. Never sent anywhere.
+const { store, useStoredValue } = createStoredValue({ kind: "session", key: "finance-os:dataset:v1", parse: parseStored });
+const { Provider, useRequired: useApi } = createRequiredContext<DatasetApi>(
+  "Dataset hooks must be used within DatasetProvider",
+);
 
 export function DatasetProvider({ children }: { children: React.ReactNode }) {
-  const raw = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
-  const stored = useMemo(() => parseStored(raw), [raw]);
-  // No CSV uploaded yet: start empty, not demo numbers — every page shows 0 until real data exists.
-  const [manualList, setManualList] = useState<Transaction[]>([]);
+  const stored = useStoredValue();
+  // No CSV / API data imported yet: start empty, not demo numbers — every page shows 0 until real data exists.
 
   // The ONE place the global reporting period is applied. Everything downstream (dashboard KPIs,
   // charts, transactions list, cash flow, reports, Ask Finance) is built from `inPeriod`, so no page
   // can show a different period from any other.
   const range = useFinancialDateRange();
   const today = useToday();
-  const allTransactions = useMemo(() => (stored ? fromRows(stored.rows) : manualList), [stored, manualList]);
+  const allTransactions = useMemo(() => (stored ? fromRows(stored.rows) : []), [stored]);
 
   const dataset = useMemo(() => {
-    if (allTransactions.length === 0) return buildEmptyDataset();
+    if (!stored || allTransactions.length === 0) return buildEmptyDataset();
     const inPeriod = filterByRange(allTransactions, range);
     const dates = allTransactions.map((t) => t.date).sort();
     return buildCsvDataset(inPeriod, {
-      fileName: stored ? stored.fileName : "Manually added transactions",
-      duplicateCount: stored ? stored.duplicateCount : 0,
+      fileName: stored.fileName,
+      duplicateCount: stored.duplicateCount,
       period: { label: range.label, startIso: range.startIso, endIso: range.endIso },
       totalTransactions: allTransactions.length,
       dataBounds: { start: dates[0], end: dates[dates.length - 1] },
@@ -114,7 +112,7 @@ export function DatasetProvider({ children }: { children: React.ReactNode }) {
       category: t.category,
       type: t.type,
       status: t.status,
-      amount: t.amountMinor / 100,
+      amount: fromMinor(t.amountMinor),
     }));
     const payload: StoredCsv = {
       v: 1,
@@ -130,33 +128,15 @@ export function DatasetProvider({ children }: { children: React.ReactNode }) {
     store.set(null);
   }, []);
 
-  const addTransaction = useCallback(
-    (t: Omit<Transaction, "id">) => {
-      const tx: Transaction = { ...t, id: `t-${Date.now()}` };
-      if (stored) store.set(JSON.stringify({ ...stored, rows: [...toRows([tx]), ...stored.rows] } satisfies StoredCsv));
-      else setManualList((prev) => [tx, ...prev]);
-    },
-    [stored],
-  );
-
   const value = useMemo(
-    () => ({ dataset, allTransactions, fileSizeBytes: stored?.fileSizeBytes ?? 0, applyCsv, clearCsv, addTransaction }),
-    [dataset, allTransactions, stored, applyCsv, clearCsv, addTransaction],
+    () => ({ dataset, fileSizeBytes: stored?.fileSizeBytes ?? 0, applyCsv, clearCsv }),
+    [dataset, stored, applyCsv, clearCsv],
   );
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
-}
-
-function useApi() {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("Dataset hooks must be used within DatasetProvider");
-  return ctx;
+  return <Provider value={value}>{children}</Provider>;
 }
 
 export const useDataset = () => useApi().dataset;
 export const useDatasetActions = () => {
-  const { applyCsv, clearCsv, addTransaction, fileSizeBytes } = useApi();
-  return { applyCsv, clearCsv, addTransaction, fileSizeBytes };
+  const { applyCsv, clearCsv, fileSizeBytes } = useApi();
+  return { applyCsv, clearCsv, fileSizeBytes };
 };
-
-/** All transactions ignoring the reporting period (e.g. for defaults in the "add transaction" form). */
-export const useAllTransactions = () => useApi().allTransactions;

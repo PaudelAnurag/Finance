@@ -3,11 +3,11 @@
 // Currency selection is global (topbar) and display-only for Phase 1 — mock
 // values don't get FX-converted, only the currency tag/prefix changes.
 import currencyCodes from "currency-codes";
-import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useMemo } from "react";
 
 import { currencyForCountry, findFiscalCountry } from "@/lib/date-range/fiscal-year";
-import { createPersistentStore } from "@/lib/persistent-store";
 import { useSettings } from "@/lib/settings";
+import { createRequiredContext, createStoredValue } from "@/lib/stored-context";
 
 export interface CurrencyOption {
   code: string;
@@ -22,16 +22,20 @@ export const currencyOptions: CurrencyOption[] = currencyCodes
 // Last resort only: normally the default comes from the country in Settings (US → USD).
 const FALLBACK_CURRENCY = "USD";
 
-const CurrencyContext = createContext<{
+const { Provider, useRequired } = createRequiredContext<{
   currency: string;
   setCurrency: (code: string) => void;
-} | null>(null);
+}>("useCurrency must be used within CurrencyProvider");
 
 // The user's own pick, persisted. Until they pick one, the currency follows the country in Settings.
-const store = createPersistentStore("local", "finance-os:currency:v1");
+const { store, useStoredValue } = createStoredValue<string | null>({
+  kind: "local",
+  key: "finance-os:currency:v1",
+  parse: (raw) => raw,
+});
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const raw = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
+  const raw = useStoredValue();
   const { settings } = useSettings(); // CurrencyProvider must sit inside SettingsProvider
   const countryCurrency = useMemo(() => {
     const code = currencyForCountry(findFiscalCountry(settings.country) ?? { code: settings.country, name: settings.country });
@@ -42,14 +46,10 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     store.set(code);
   }, []);
   const value = useMemo(() => ({ currency, setCurrency }), [currency, setCurrency]);
-  return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
+  return <Provider value={value}>{children}</Provider>;
 }
 
-export function useCurrency() {
-  const ctx = useContext(CurrencyContext);
-  if (!ctx) throw new Error("useCurrency must be used within CurrencyProvider");
-  return ctx;
-}
+export const useCurrency = useRequired;
 
 import { formatMoney, formatSignedMoney, renderMoneyTokens } from "@/lib/format";
 

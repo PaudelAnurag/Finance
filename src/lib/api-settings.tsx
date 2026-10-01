@@ -3,9 +3,9 @@
 // Per-company API connection for Upload Data → "Connect an API" tab.
 // Configured in Settings, never hardcoded, since each company's accounting
 // API differs in URL, auth, response shape and field names.
-import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useMemo } from "react";
 
-import { createPersistentStore } from "@/lib/persistent-store";
+import { createRequiredContext, createStoredValue } from "@/lib/stored-context";
 
 export type AuthScheme = "none" | "bearer" | "header";
 
@@ -42,8 +42,6 @@ export const defaultApiSettings: ApiSettings = {
   expenseWord: "expense",
 };
 
-const store = createPersistentStore("local", "finance-os:api-settings:v1");
-
 function parse(raw: string | null): ApiSettings {
   if (!raw) return defaultApiSettings;
   try {
@@ -58,18 +56,16 @@ function parse(raw: string | null): ApiSettings {
   }
 }
 
-const Ctx = createContext<{ apiSettings: ApiSettings; save: (next: ApiSettings) => boolean } | null>(null);
+const { store, useStoredValue } = createStoredValue({ kind: "local", key: "finance-os:api-settings:v1", parse });
+const { Provider, useRequired } = createRequiredContext<{ apiSettings: ApiSettings; save: (next: ApiSettings) => boolean }>(
+  "useApiSettings must be used within ApiSettingsProvider",
+);
 
 export function ApiSettingsProvider({ children }: { children: React.ReactNode }) {
-  const raw = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
-  const apiSettings = useMemo(() => parse(raw), [raw]);
+  const apiSettings = useStoredValue();
   const save = useCallback((next: ApiSettings) => store.set(JSON.stringify(next)), []);
   const value = useMemo(() => ({ apiSettings, save }), [apiSettings, save]);
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return <Provider value={value}>{children}</Provider>;
 }
 
-export function useApiSettings() {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useApiSettings must be used within ApiSettingsProvider");
-  return ctx;
-}
+export const useApiSettings = useRequired;
