@@ -34,7 +34,7 @@ export async function fetchAndAnalyzeApi(cfg: ApiSettings, signal?: AbortSignal)
     // An https page can't call a plain http:// API — every browser blocks it as "mixed content".
     // localhost is the exception, so this mostly bites when the API is a LAN/public IP address.
     const mixed =
-      typeof window !== "undefined" && window.location.protocol === "https:" && /^http:\/\//i.test(cfg.url.trim()) && !/^http:\/\/(localhost|127\.0\.0\.1|\[::1\])([:/]|$)/i.test(cfg.url.trim());
+      typeof window !== "undefined" && window.location.protocol === "https:" && /^http:\/\//i.test(cfg.url.trim()) && /^http:\/\/(localhost|127\.0\.0\.1|\[::1\])([:/]|$)/i.test(cfg.url.trim());
     return {
       analysis: fatal(
         meta,
