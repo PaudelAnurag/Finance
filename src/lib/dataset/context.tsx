@@ -6,6 +6,8 @@ import { Transaction, TransactionStatus, TransactionType } from "@/data/mock-tra
 import type { CsvAnalysis } from "@/lib/csv/analyze";
 import { buildCsvDataset, buildEmptyDataset } from "@/lib/dataset/from-transactions";
 import type { Dataset } from "@/lib/dataset/types";
+import { useFinancialDateRange, useToday } from "@/lib/date-range/context";
+import { filterByRange } from "@/lib/date-range/filter";
 import { createPersistentStore } from "@/lib/persistent-store";
 
 // Uploaded data is cached in this browser TAB only (sessionStorage): it survives
@@ -63,7 +65,10 @@ const fromRows = (rows: StoredRow[]): Transaction[] =>
   }));
 
 interface DatasetApi {
+  /** Built from the transactions inside the selected reporting period only. */
   dataset: Dataset;
+  /** Every transaction held, regardless of the selected period. */
+  allTransactions: Transaction[];
   fileSizeBytes: number;
   /** Cache a validated CSV. Returns whether it could also be persisted for page refreshes. */
   applyCsv: (analysis: CsvAnalysis) => { persisted: boolean };
@@ -79,11 +84,27 @@ export function DatasetProvider({ children }: { children: React.ReactNode }) {
   // No CSV uploaded yet: start empty, not demo numbers — every page shows 0 until real data exists.
   const [manualList, setManualList] = useState<Transaction[]>([]);
 
+  // The ONE place the global reporting period is applied. Everything downstream (dashboard KPIs,
+  // charts, transactions list, cash flow, reports, Ask Finance) is built from `inPeriod`, so no page
+  // can show a different period from any other.
+  const range = useFinancialDateRange();
+  const today = useToday();
+  const allTransactions = useMemo(() => (stored ? fromRows(stored.rows) : manualList), [stored, manualList]);
+
   const dataset = useMemo(() => {
-    if (stored) return buildCsvDataset(fromRows(stored.rows), { fileName: stored.fileName, duplicateCount: stored.duplicateCount });
-    if (manualList.length === 0) return buildEmptyDataset();
-    return buildCsvDataset(manualList, { fileName: "Manually added transactions", duplicateCount: 0 });
-  }, [stored, manualList]);
+    if (allTransactions.length === 0) return buildEmptyDataset();
+    const inPeriod = filterByRange(allTransactions, range);
+    const dates = allTransactions.map((t) => t.date).sort();
+    return buildCsvDataset(inPeriod, {
+      fileName: stored ? stored.fileName : "Manually added transactions",
+      duplicateCount: stored ? stored.duplicateCount : 0,
+      period: { label: range.label, startIso: range.startIso, endIso: range.endIso },
+      totalTransactions: allTransactions.length,
+      dataBounds: { start: dates[0], end: dates[dates.length - 1] },
+      // Only project forward if the period hasn't ended yet.
+      includeForecast: range.endIso >= today,
+    });
+  }, [allTransactions, stored, range, today]);
 
   const applyCsv = useCallback((analysis: CsvAnalysis) => {
     const list: Transaction[] = analysis.transactions.map((t) => ({
@@ -119,8 +140,8 @@ export function DatasetProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ dataset, fileSizeBytes: stored?.fileSizeBytes ?? 0, applyCsv, clearCsv, addTransaction }),
-    [dataset, stored, applyCsv, clearCsv, addTransaction],
+    () => ({ dataset, allTransactions, fileSizeBytes: stored?.fileSizeBytes ?? 0, applyCsv, clearCsv, addTransaction }),
+    [dataset, allTransactions, stored, applyCsv, clearCsv, addTransaction],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -136,3 +157,6 @@ export const useDatasetActions = () => {
   const { applyCsv, clearCsv, addTransaction, fileSizeBytes } = useApi();
   return { applyCsv, clearCsv, addTransaction, fileSizeBytes };
 };
+
+/** All transactions ignoring the reporting period (e.g. for defaults in the "add transaction" form). */
+export const useAllTransactions = () => useApi().allTransactions;

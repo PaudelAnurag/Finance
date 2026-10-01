@@ -3,7 +3,11 @@
 // Currency selection is global (topbar) and display-only for Phase 1 — mock
 // values don't get FX-converted, only the currency tag/prefix changes.
 import currencyCodes from "currency-codes";
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from "react";
+
+import { currencyForCountry, findFiscalCountry } from "@/lib/date-range/fiscal-year";
+import { createPersistentStore } from "@/lib/persistent-store";
+import { useSettings } from "@/lib/settings";
 
 export interface CurrencyOption {
   code: string;
@@ -15,16 +19,29 @@ export const currencyOptions: CurrencyOption[] = currencyCodes
   .map((code) => ({ code, name: currencyCodes.code(code)?.currency ?? code }))
   .sort((a, b) => a.code.localeCompare(b.code));
 
-const DEFAULT_CURRENCY = "NPR";
+// Last resort only: normally the default comes from the country in Settings (US → USD).
+const FALLBACK_CURRENCY = "USD";
 
 const CurrencyContext = createContext<{
   currency: string;
   setCurrency: (code: string) => void;
 } | null>(null);
 
+// The user's own pick, persisted. Until they pick one, the currency follows the country in Settings.
+const store = createPersistentStore("local", "finance-os:currency:v1");
+
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currency, setCurrency] = useState(DEFAULT_CURRENCY);
-  const value = useMemo(() => ({ currency, setCurrency }), [currency]);
+  const raw = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
+  const { settings } = useSettings(); // CurrencyProvider must sit inside SettingsProvider
+  const countryCurrency = useMemo(() => {
+    const code = currencyForCountry(findFiscalCountry(settings.country) ?? { code: settings.country, name: settings.country });
+    return code && currencyOptions.some((c) => c.code === code) ? code : FALLBACK_CURRENCY;
+  }, [settings.country]);
+  const currency = raw && currencyOptions.some((c) => c.code === raw) ? raw : countryCurrency;
+  const setCurrency = useCallback((code: string) => {
+    store.set(code);
+  }, []);
+  const value = useMemo(() => ({ currency, setCurrency }), [currency, setCurrency]);
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
 }
 

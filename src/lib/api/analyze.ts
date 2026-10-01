@@ -30,7 +30,19 @@ export async function fetchAndAnalyzeApi(cfg: ApiSettings, signal?: AbortSignal)
   try {
     res = await fetch(cfg.url, { headers: { Accept: "application/json", ...authHeaders(cfg) }, signal });
   } catch {
-    return { analysis: fatal(meta, "Could not reach the API. Check the URL and that it allows requests from this browser (CORS).") };
+    if (signal?.aborted) return { analysis: fatal(meta, "The request was cancelled.") };
+    // An https page can't call a plain http:// API — every browser blocks it as "mixed content".
+    // localhost is the exception, so this mostly bites when the API is a LAN/public IP address.
+    const mixed =
+      typeof window !== "undefined" && window.location.protocol === "https:" && /^http:\/\//i.test(cfg.url.trim()) && !/^http:\/\/(localhost|127\.0\.0\.1|\[::1\])([:/]|$)/i.test(cfg.url.trim());
+    return {
+      analysis: fatal(
+        meta,
+        mixed
+          ? "This app is open over https, so browsers block a plain http:// API (mixed content). Use an https:// API URL, or open the app over http for local testing."
+          : "Could not reach the API. Check the URL and that it allows requests from this browser (CORS), including the auth header you configured.",
+      ),
+    };
   }
   if (!res.ok) {
     return {

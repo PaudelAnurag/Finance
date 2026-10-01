@@ -73,9 +73,22 @@ export interface AskData {
   };
 }
 
+/** The reporting period the dataset was built for (null when there is no data yet). */
+export interface DatasetPeriod {
+  label: string;
+  startIso: string;
+  endIso: string;
+}
+
 export interface Dataset {
   source: "csv" | "empty";
   fileName: string | null;
+  /** The selected reporting period. Every figure below covers only this period. */
+  period: DatasetPeriod | null;
+  /** Transactions held in total, before the period filter (`transactions` is the filtered list). */
+  totalTransactions: number;
+  /** Earliest / latest transaction date held in total, for "show all data" shortcuts. */
+  dataBounds: { start: string; end: string } | null;
   snapshot: SnapshotMetric[];
   snapshotNote: string | null;
   cashSeries: CashPoint[];

@@ -3,7 +3,7 @@
 import type { Transaction } from "@/data/mock-transactions";
 import { askQuestions } from "@/data/ask-finance-qa";
 import { latestActual, netChange, worstMonthDrop } from "@/lib/cash-flow";
-import type { AskData, AttentionItem, CashPoint, Dataset, QuickInsight, SnapshotMetric, Tone } from "@/lib/dataset/types";
+import type { AskData, AttentionItem, CashPoint, Dataset, DatasetPeriod, QuickInsight, SnapshotMetric, Tone } from "@/lib/dataset/types";
 import { moneyToken, round2 } from "@/lib/format";
 import { formatMonth, formatShortDate, toMinor } from "@/lib/transactions";
 
@@ -35,10 +35,19 @@ function nextMonth(ym: string, k: number) {
 
 const sortedCats = (map: Bucket["incomeCats"]) => [...map.values()].sort((a, b) => b.total - a.total);
 
-export function buildCsvDataset(
-  transactions: Transaction[],
-  meta: { fileName: string; duplicateCount: number },
-): Dataset {
+export interface DatasetMeta {
+  fileName: string;
+  duplicateCount: number;
+  /** Reporting period `transactions` was already filtered to (the builder just labels the notes). */
+  period?: DatasetPeriod;
+  /** Transactions held before the period filter. Defaults to `transactions.length`. */
+  totalTransactions?: number;
+  dataBounds?: { start: string; end: string } | null;
+  /** Project cash forward? False for periods that have already ended. Default true. */
+  includeForecast?: boolean;
+}
+
+export function buildCsvDataset(transactions: Transaction[], meta: DatasetMeta): Dataset {
   const buckets = new Map<string, Bucket>();
   let incomeMinor = 0;
   let expenseMinor = 0;
@@ -92,7 +101,8 @@ export function buildCsvDataset(
   const window = Math.min(3, months.length);
   const avgNetMinor =
     months.slice(-window).reduce((s, ym) => s + (buckets.get(ym)!.income - buckets.get(ym)!.expense), 0) / Math.max(window, 1);
-  if (months.length) {
+  const includeForecast = meta.includeForecast ?? true;
+  if (months.length && includeForecast) {
     cashSeries[cashSeries.length - 1].forecast = cashSeries[cashSeries.length - 1].actual;
     for (let k = 1; k <= FORECAST_MONTHS; k++) {
       cashSeries.push({ month: formatMonth(nextMonth(months[months.length - 1], k)), forecast: major(running + avgNetMinor * k) });
@@ -219,6 +229,12 @@ export function buildCsvDataset(
       : { tone: "green", title: "No pending income", detail: "Nothing outstanding in your data", question: askQuestions.overdue },
   ];
 
+  // Period-aware wording. `outsidePeriod` = data exists, but none of it falls in the selected period.
+  const total = meta.totalTransactions ?? transactions.length;
+  const periodText = meta.period ? ` in ${meta.period.label}` : "";
+  const outsidePeriod = meta.period !== undefined && transactions.length === 0 && total > 0;
+  const noneNote = `No transactions fall within ${meta.period?.label ?? "the selected period"}. Pick a different period from the date selector.`;
+
   // ---- reports inputs ----
   const reports: Dataset["reports"] = {
     monthly: months.map((ym) => ({
@@ -239,8 +255,9 @@ export function buildCsvDataset(
     ],
     openingCash: 0,
     balanceSheet: { assets: [{ label: "Cash (cumulative net cash flow)", amount: major(running) }], liabilities: [] },
-    note:
-      "Built from your uploaded transactions. Cost of goods sold isn't in a transactions CSV, so all expenses are shown as operating expenses; opening cash is assumed to be zero and the balance sheet shows cash only.",
+    note: outsidePeriod
+      ? noneNote
+      : `Built from your uploaded transactions${periodText}. Cost of goods sold isn't in a transactions CSV, so all expenses are shown as operating expenses; opening cash is assumed to be zero and the balance sheet shows cash only.`,
   };
 
   // ---- ask data ----
@@ -270,11 +287,19 @@ export function buildCsvDataset(
   return {
     source: "csv",
     fileName: meta.fileName,
+    period: meta.period ?? null,
+    totalTransactions: total,
+    dataBounds: meta.dataBounds ?? null,
     snapshot,
-    snapshotNote:
-      "Net cash = cumulative net of all rows (pending included), assuming zero opening balance. Pending income/expenses stand in for receivables/payables. Percent changes compare the last two months.",
+    snapshotNote: outsidePeriod
+      ? noneNote
+      : `Net cash = cumulative net of all rows${periodText} (pending included), assuming zero opening balance at the start of the period. Pending income/expenses stand in for receivables/payables. Percent changes compare the last two months.`,
     cashSeries,
-    cashNote: `Forecast = latest net cash plus the average monthly net of the last ${window} month${window === 1 ? "" : "s"}, projected ${FORECAST_MONTHS} months ahead.`,
+    cashNote: outsidePeriod
+      ? null
+      : includeForecast
+        ? `Forecast = latest net cash plus the average monthly net of the last ${window} month${window === 1 ? "" : "s"}, projected ${FORECAST_MONTHS} months ahead.`
+        : `Cumulative net cash flow across ${meta.period?.label ?? "the selected period"}. No forecast is shown because the period has already ended.`,
     attention,
     quickInsights,
     transactions,
@@ -301,6 +326,9 @@ export function buildEmptyDataset(): Dataset {
     ...zero,
     source: "empty",
     fileName: null,
+    period: null,
+    totalTransactions: 0,
+    dataBounds: null,
     snapshotNote: "Upload a CSV (or add a transaction) to see your real numbers here.",
     cashNote: null,
     reports: { ...zero.reports, note: "Upload a CSV to generate real financial statements — nothing has been imported yet." },
